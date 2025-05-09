@@ -130,7 +130,7 @@ def print_welcome():
     """Print the welcome message with ASCII art"""
     console.print(Panel.fit(
         Text(XERUS_ASCII),
-        title="Xerus - CLI Agent, powered by Smolagents",
+        title="Xerus - CLI Agent, powered by Huggingface Smolagents",
         border_style="blue"
     ))
 
@@ -147,8 +147,9 @@ def print_project_info():
     examples = [
         ("Basic usage:", "xerus run \"What is the current weather in New York City?\""),
         ("With web search:", "xerus run \"Find the latest news about AI\" --tools web_search"),
-        ("With specific imports:", "xerus run \"Create a plot of sin(x)\" --imports numpy,matplotlib"),
+        ("With specific imports:", "xerus run \"Create a plot of sin(x)\" --imports \"numpy matplotlib\""),
         ("Use OpenAI model:", "xerus run \"Explain quantum computing\" --model-type openai --model-id gpt-4"),
+        ("Use Mixtral model:", "xerus run \"Write a Python script\" --model-type inference --model-id mistralai/Mixtral-8x7B-Instruct-v0.1"),
     ]
     
     # Create the display panel
@@ -168,14 +169,63 @@ def print_project_info():
         table.add_row(f"[bold]{label}[/bold]", f"[green]{cmd}[/green]")
     console.print(table)
     
+    # Options help
+    console.print("\n[bold]Key Options:[/bold]")
+    options_table = Table(show_header=True, box=None, padding=(0, 2))
+    options_table.add_column("Option", style="bold green")
+    options_table.add_column("Description")
+    options_table.add_row(
+        "--model-type", 
+        "Model provider: inference (HF), openai, azure-openai, amazon-bedrock, litellm, transformers, mlx-lm"
+    )
+    options_table.add_row(
+        "--model-id", 
+        "Model identifier (e.g., Qwen/Qwen2.5-Coder-32B-Instruct, gpt-4, mistralai/Mistral-7B-Instruct-v0.1)"
+    )
+    options_table.add_row(
+        "--tools", 
+        "Comma-separated tools list (currently supported: web_search)"
+    )
+    options_table.add_row(
+        "--imports", 
+        "Space-separated Python packages the agent can import (e.g., \"numpy matplotlib pandas\")"
+    )
+    options_table.add_row(
+        "--api-key", 
+        "API key for model service (alternatively use environment variables)"
+    )
+    console.print(options_table)
+    
     # Commands help
     console.print("\n[bold]Commands:[/bold]")
     console.print("  [green]xerus run[/green]         Run the agent with a prompt")
     console.print("  [green]xerus --help[/green]      Show help message")
 
 @app.callback(invoke_without_command=True)
-def callback(ctx: typer.Context):
-    """Xerus CLI - An AI agent powered by Smolagents"""
+def callback(
+    ctx: typer.Context,
+    model_type: Optional[str] = typer.Option(
+        None, 
+        help="Type of model to use: inference (Hugging Face), openai, azure-openai, amazon-bedrock, litellm, transformers, or mlx-lm"
+    ),
+    model_id: Optional[str] = typer.Option(
+        None,
+        help="Model identifier (e.g., 'Qwen/Qwen2.5-Coder-32B-Instruct', 'gpt-4', 'mistralai/Mistral-7B-Instruct-v0.1')"
+    ),
+    api_key: Optional[str] = typer.Option(
+        None, 
+        help="API key for the model service (can also use environment variables like OPENAI_API_KEY)"
+    ),
+    tools: Optional[str] = typer.Option(
+        None,
+        help="Comma-separated list of tools to enable (currently supported: web_search)"
+    ),
+    imports: Optional[str] = typer.Option(
+        None,
+        help="Space-separated list of Python packages that the agent is authorized to import (e.g., 'numpy matplotlib pandas')"
+    )
+):
+    """Xerus CLI - An AI agent powered by Huggingface Smolagents"""
     print_welcome()
     
     # If no subcommand is provided, show project info
@@ -187,23 +237,23 @@ def run(
     prompt: str = typer.Argument(..., help="Text instruction for the agent to process"),
     model_type: str = typer.Option(
         "inference", 
-        help="Type of model to use (inference, openai, azure-openai, amazon-bedrock, litellm, transformers, mlx-lm)"
+        help="Type of model to use: inference (Hugging Face), openai, azure-openai, amazon-bedrock, litellm, transformers, or mlx-lm"
     ),
     model_id: str = typer.Option(
         "Qwen/Qwen2.5-Coder-32B-Instruct",
-        help="ID or name of the model"
+        help="Model identifier (e.g., 'Qwen/Qwen2.5-Coder-32B-Instruct', 'gpt-4', 'mistralai/Mistral-7B-Instruct-v0.1')"
     ),
     api_key: Optional[str] = typer.Option(
         None, 
-        help="API key for the model service"
+        help="API key for the model service (can also use environment variables like OPENAI_API_KEY)"
     ),
     tools: Optional[str] = typer.Option(
         None,
-        help="Comma-separated list of tools to enable (e.g., web_search)"
+        help="Comma-separated list of tools to enable (currently supported: web_search)"
     ),
     imports: Optional[str] = typer.Option(
         None,
-        help="Space-separated list of Python packages to authorize for import"
+        help="Space-separated list of Python packages that the agent is authorized to import (e.g., 'numpy matplotlib pandas')"
     )
 ):
     """Run the agent with a prompt."""
