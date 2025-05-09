@@ -18,6 +18,8 @@ setup(
         "smolagents>=1.15.0",
         "typer>=0.15.3",
         "rich>=10.0.0",
+        "huggingface_hub>=0.20.0",
+        "gradio-client>=0.6.0",  # Required for Space tools
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

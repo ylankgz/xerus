@@ -12,11 +12,14 @@ from rich.progress import Progress
 from rich.text import Text
 from rich.table import Table
 import importlib
+import importlib.util
 
 from smolagents import CodeAgent
 from smolagents import WebSearchTool
+from smolagents import Tool, load_tool, ToolCollection
 
 from . import __version__
+from .models import get_model, XerusError, ModelInitializationError, AuthenticationError
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -33,69 +36,8 @@ XERUS_ASCII = """
              '"'''          
 """
 
-def get_model(model_type, model_id, api_key=None):
-    """
-    Create a model instance based on specified type.
-    
-    Args:
-        model_type: Type of model to use ('inference', 'openai', 'litellm', 'transformers')
-        model_id: ID or name of the model
-        api_key: API key for the model service
-    
-    Returns:
-        The initialized model instance
-    """
-    # Map model_type to the corresponding class name
-    model_class_map = {
-        "inference": "InferenceClientModel",
-        "openai": "OpenAIServerModel",
-        "azure-openai": "AzureOpenAIServerModel",
-        "amazon-bedrock": "AmazonBedrockServerModel",
-        "mlx-lm": "MLXModel",
-        "litellm": "LiteLLMModel",
-        "transformers": "TransformersModel"
-    }
-    
-    if model_type not in model_class_map:
-        raise ValueError(f"Unknown model type: {model_type}")
-    
-    # Dynamically import the appropriate model class
-    model_class_name = model_class_map[model_type]
-    ModelClass = getattr(importlib.import_module("smolagents.models"), model_class_name)
-    
-    # Initialize and return the model based on its type
-    if model_type == "inference":
-        return ModelClass(model_id=model_id)
-    elif model_type in ["openai", "azure-openai"]:
-        return ModelClass(
-            model_id=model_id,
-            api_key=api_key or os.environ.get("OPENAI_API_KEY")
-        )
-    elif model_type == "amazon-bedrock":
-        return ModelClass(
-            model_id=model_id,
-            aws_access_key=os.environ.get("AWS_ACCESS_KEY_ID"),
-            aws_secret_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
-            aws_region=os.environ.get("AWS_REGION", "us-east-1")
-        )
-    elif model_type == "litellm":
-        return ModelClass(
-            model_id=model_id,
-            api_key=api_key or os.environ.get("LITELLM_API_KEY")
-        )
-    elif model_type == "transformers":
-        return ModelClass(
-            model_id=model_id,
-            max_new_tokens=4096,
-            device_map="auto"
-        )
-    elif model_type == "mlx-lm":
-        return ModelClass(
-            model_id=model_id,
-            max_tokens=4096
-        )
-
-def create_agent(model_type, model_id, api_key=None, tools=None, imports=None):
+def create_agent(model_type, model_id, api_key=None, tools=None, imports=None, 
+               tool_local=None, tool_hub=None, tool_space=None, tool_collection=None):
     """
     Create a CodeAgent with specified model and tools.
     
@@ -105,6 +47,10 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None):
         api_key: API key for the model service
         tools: List of tools to enable
         imports: List of Python packages to authorize for import
+        tool_local: Path to a local tool file
+        tool_hub: Hugging Face Hub repo ID for a tool
+        tool_space: Hugging Face Space ID to import as a tool
+        tool_collection: Hugging Face Hub repo ID for a collection of tools
     
     Returns:
         The initialized CodeAgent
@@ -115,6 +61,61 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None):
     if tools:
         if "web_search" in tools:
             available_tools.append(WebSearchTool())
+    
+    # Add tool from local file if specified
+    if tool_local:
+        try:
+            console.print(f"[bold blue]Loading tool from local file: {tool_local}[/bold blue]")
+            # Import the module dynamically
+            spec = importlib.util.spec_from_file_location("local_tool", tool_local)
+            local_tool_module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(local_tool_module)
+            
+            # Find Tool instances in the module
+            for name in dir(local_tool_module):
+                obj = getattr(local_tool_module, name)
+                if isinstance(obj, Tool):
+                    available_tools.append(obj)
+                    console.print(f"[green]Successfully loaded tool: {obj.name}[/green]")
+        except Exception as e:
+            console.print(f"[red]Error loading tool from local file: {str(e)}[/red]")
+    
+    # Add tool from Hugging Face Hub if specified
+    if tool_hub:
+        try:
+            console.print(f"[bold blue]Loading tool from Hugging Face Hub: {tool_hub}[/bold blue]")
+            hub_tool = load_tool(tool_hub, trust_remote_code=True)
+            available_tools.append(hub_tool)
+            console.print(f"[green]Successfully loaded tool from Hub: {hub_tool.name}[/green]")
+        except Exception as e:
+            console.print(f"[red]Error loading tool from Hub: {str(e)}[/red]")
+    
+    # Add tool from Hugging Face Space if specified
+    if tool_space:
+        try:
+            # Extract name and description if provided in format "space_id:name:description"
+            parts = tool_space.split(":", 2)
+            space_id = parts[0]
+            name = parts[1] if len(parts) > 1 else "space_tool"
+            description = parts[2] if len(parts) > 2 else f"Tool from Space {space_id}"
+            
+            console.print(f"[bold blue]Loading tool from Hugging Face Space: {space_id}[/bold blue]")
+            space_tool = Tool.from_space(space_id, name=name, description=description)
+            available_tools.append(space_tool)
+            console.print(f"[green]Successfully loaded tool from Space: {name}[/green]")
+        except Exception as e:
+            console.print(f"[red]Error loading tool from Space: {str(e)}[/red]")
+    
+    # Add tools from collection if specified
+    if tool_collection:
+        try:
+            console.print(f"[bold blue]Loading tool collection from Hub: {tool_collection}[/bold blue]")
+            collection = ToolCollection.from_hub(collection_slug=tool_collection, trust_remote_code=True)
+            # Add all tools from the collection
+            available_tools.extend(collection.tools)
+            console.print(f"[green]Successfully loaded tool collection with {len(collection.tools)} tools[/green]")
+        except Exception as e:
+            console.print(f"[red]Error loading tool collection: {str(e)}[/red]")
     
     additional_imports = []
     if imports:
@@ -150,6 +151,10 @@ def print_project_info():
         ("With specific imports:", "xerus run \"Create a plot of sin(x)\" --imports \"numpy matplotlib\""),
         ("Use OpenAI model:", "xerus run \"Explain quantum computing\" --model-type openai --model-id gpt-4"),
         ("Use Mixtral model:", "xerus run \"Write a Python script\" --model-type inference --model-id mistralai/Mixtral-8x7B-Instruct-v0.1"),
+        ("With local tool:", "xerus run \"Generate image\" --tool-local ./my_tools.py"),
+        ("With Hub tool:", "xerus run \"Analyze sentiment\" --tool-hub username/sentiment-tool"),
+        ("With Space tool:", "xerus run \"Generate an image\" --tool-space stabilityai/stable-diffusion:image_generator:Generates images from text prompts"),
+        ("With tool collection:", "xerus run \"Analyze data\" --tool-collection huggingface-tools/data-analysis"),
     ]
     
     # Create the display panel
@@ -194,6 +199,22 @@ def print_project_info():
         "--api-key", 
         "API key for model service (alternatively use environment variables)"
     )
+    options_table.add_row(
+        "--tool-local", 
+        "Path to a local Python file containing tool definitions"
+    )
+    options_table.add_row(
+        "--tool-hub", 
+        "Hugging Face Hub repo ID for a tool (e.g., username/tool-name)"
+    )
+    options_table.add_row(
+        "--tool-space", 
+        "Hugging Face Space ID to import as a tool (format: space_id:name:description)"
+    )
+    options_table.add_row(
+        "--tool-collection", 
+        "Hugging Face Hub repo ID for a collection of tools"
+    )
     console.print(options_table)
     
     # Commands help
@@ -223,6 +244,22 @@ def callback(
     imports: Optional[str] = typer.Option(
         None,
         help="Space-separated list of Python packages that the agent is authorized to import (e.g., 'numpy matplotlib pandas')"
+    ),
+    tool_local: Optional[str] = typer.Option(
+        None,
+        help="Path to a local tool file"
+    ),
+    tool_hub: Optional[str] = typer.Option(
+        None,
+        help="Hugging Face Hub repo ID for a tool"
+    ),
+    tool_space: Optional[str] = typer.Option(
+        None,
+        help="Hugging Face Space ID to import as a tool (format: space_id:name:description)"
+    ),
+    tool_collection: Optional[str] = typer.Option(
+        None,
+        help="Hugging Face Hub repo ID for a collection of tools"
     )
 ):
     """Xerus CLI - An AI agent powered by Huggingface Smolagents"""
@@ -254,14 +291,29 @@ def run(
     imports: Optional[str] = typer.Option(
         None,
         help="Space-separated list of Python packages that the agent is authorized to import (e.g., 'numpy matplotlib pandas')"
+    ),
+    tool_local: Optional[str] = typer.Option(
+        None,
+        help="Path to a local tool file"
+    ),
+    tool_hub: Optional[str] = typer.Option(
+        None,
+        help="Hugging Face Hub repo ID for a tool"
+    ),
+    tool_space: Optional[str] = typer.Option(
+        None,
+        help="Hugging Face Space ID to import as a tool"
+    ),
+    tool_collection: Optional[str] = typer.Option(
+        None,
+        help="Hugging Face Hub repo ID for a collection of tools"
     )
 ):
     """Run the agent with a prompt."""
     try:
-        # Get the list of valid model types from the model_class_map
         with console.status("[bold green]Initializing agent..."):
             tool_list = tools.split(",") if tools else []
-            agent = create_agent(model_type, model_id, api_key, tool_list, imports)
+            agent = create_agent(model_type, model_id, api_key, tool_list, imports, tool_local, tool_hub, tool_space, tool_collection)
         
         console.print(Panel.fit(
             f"[bold]Prompt:[/bold] {prompt}",
@@ -281,23 +333,36 @@ def run(
             border_style="green"
         ))
     
+    except AuthenticationError as e:
+        console.print(Panel.fit(
+            f"[bold red]Authentication Error:[/bold red] {str(e)}\n\n"
+            "To use Hugging Face models, you need to set your HF_TOKEN environment variable:\n"
+            "  export HF_TOKEN=your_huggingface_token\n\n"
+            "You can get your token from: https://huggingface.co/settings/tokens",
+            title="Authentication Error",
+            border_style="red"
+        ))
+        sys.exit(1)
+    except ModelInitializationError as e:
+        console.print(Panel.fit(
+            f"[bold red]Model Error:[/bold red] {str(e)}",
+            title="Model Initialization Failed",
+            border_style="red"
+        ))
+        sys.exit(1)
+    except XerusError as e:
+        console.print(Panel.fit(
+            f"[bold red]Xerus Error:[/bold red] {str(e)}",
+            title="Error",
+            border_style="red"
+        ))
+        sys.exit(1)
     except Exception as e:
-        error_message = str(e)
-        if "401 Client Error: Unauthorized" in error_message:
-            console.print(Panel.fit(
-                "[bold red]Authentication Error:[/bold red] Unable to authenticate with Hugging Face.\n\n"
-                "To use Hugging Face models, you need to set your HF_TOKEN environment variable:\n"
-                "  export HF_TOKEN=your_huggingface_token\n\n"
-                "You can get your token from: https://huggingface.co/settings/tokens",
-                title="Authentication Error",
-                border_style="red"
-            ))
-        else:
-            console.print(Panel.fit(
-                f"[bold red]Error:[/bold red] {error_message}",
-                title="Error",
-                border_style="red"
-            ))
+        console.print(Panel.fit(
+            f"[bold red]Unexpected Error:[/bold red] {str(e)}",
+            title="Error",
+            border_style="red"
+        ))
         sys.exit(1)
 
 def cli():

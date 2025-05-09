@@ -22,11 +22,32 @@ Enable web search and specific Python packages:
 xerus run "Find the latest SpaceX launch and calculate how many days ago it happened" --tools web_search --imports datetime,math
 ```
 
+Use custom tools:
+
+```bash
+# Use a local tool
+xerus run "Generate a greeting" --tool-local ./my_tools.py
+
+# Use a tool from Hugging Face Hub
+xerus run "Analyze sentiment" --tool-hub username/sentiment-tool
+
+# Use a Space as a tool
+xerus run "Generate an image" --tool-space stabilityai/stable-diffusion:image_generator:Generates images from text
+
+# Use Tool Collection as a tool
+xerus run "Draw me a picture of rivers and lakes" --tool-space huggingface-tools/diffusion-tools-6630bb19a942c2306a2cdb6f
+```
+
 ## Features
 
 - Run AI agents from your terminal with simple commands
 - Support for various LLM providers (Huggingface, OpenAI, etc.)
 - Web search capability through smolagents tools
+- Load custom tools from various sources:
+  - Local Python files
+  - Hugging Face Hub
+  - Hugging Face Spaces
+  - Tool collections
 - Configurable Python package imports for agent code execution
 - Rich terminal output with progress indicators
 
@@ -49,6 +70,11 @@ Options:
                                   (e.g., web_search)
   --imports TEXT                  Space-separated list of Python packages to
                                   authorize for import
+  --tool-local TEXT               Path to a local tool file
+  --tool-hub TEXT                 Hugging Face Hub repo ID for a tool
+  --tool-space TEXT               Hugging Face Space ID to import as a tool
+                                  (format: space_id:name:description)
+  --tool-collection TEXT          Hugging Face Hub repo ID for a collection of tools
   --help                          Show this message and exit.
 ```
 
@@ -78,6 +104,28 @@ Allow specific imports for code execution:
 ```bash
 xerus run "Create a data visualization of the S&P 500 over the last year" --imports pandas,matplotlib,yfinance
 ```
+
+### Using Custom Tools
+
+Create a custom greeting tool:
+
+```bash
+xerus run "Say hello to me in Spanish" --tool-local ./examples/hello_tool.py
+```
+
+Use an image generation tool from Hugging Face Space:
+
+```bash
+xerus run "Generate an image of a sunset over mountains" --tool-space stabilityai/stable-diffusion:image_generator:Creates images from text prompts
+```
+
+Combine multiple tools:
+
+```bash
+xerus run "Find news about climate change and generate an infographic" --tools web_search --tool-hub username/infographic-tool --imports matplotlib,pandas
+```
+
+See the `examples` directory for more detailed examples and tool templates.
 
 ## Local Development
 
