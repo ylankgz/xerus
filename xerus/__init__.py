@@ -10,6 +10,7 @@ __version__ = "0.1.0"
 # Import key functions to make them available at package level
 from .cli import cli, run
 from .agent import create_agent
+from .tools import ToolManager
 
 # Import custom exceptions for better error handling
-from .models import XerusError, ModelInitializationError, AuthenticationError 
+from .models import ModelInitializationError, AuthenticationError

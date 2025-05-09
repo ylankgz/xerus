@@ -40,7 +40,7 @@ def callback(
     ),
     tools: Optional[str] = typer.Option(
         None,
-        help="Comma-separated list of tools to enable (currently supported: web_search)"
+        help="Comma-separated list of tools to enable (e.g., 'web_search,path/to/tool.py,hub:user/tool')"
     ),
     imports: Optional[str] = typer.Option(
         None,
@@ -61,6 +61,10 @@ def callback(
     tool_collection: Optional[str] = typer.Option(
         None,
         help="Hugging Face Hub repo ID for a collection of tools"
+    ),
+    tool_dirs: Optional[str] = typer.Option(
+        None,
+        help="Comma-separated list of directories to discover tools from"
     )
 ):
     """Xerus CLI - An AI agent powered by Huggingface Smolagents"""
@@ -87,7 +91,7 @@ def run(
     ),
     tools: Optional[str] = typer.Option(
         None,
-        help="Comma-separated list of tools to enable (currently supported: web_search)"
+        help="Comma-separated list of tools to enable (e.g., 'web_search,path/to/tool.py,hub:user/tool')"
     ),
     imports: Optional[str] = typer.Option(
         None,
@@ -103,19 +107,28 @@ def run(
     ),
     tool_space: Optional[str] = typer.Option(
         None,
-        help="Hugging Face Space ID to import as a tool"
+        help="Hugging Face Space ID to import as a tool (format: space_id:name:description)"
     ),
     tool_collection: Optional[str] = typer.Option(
         None,
         help="Hugging Face Hub repo ID for a collection of tools"
+    ),
+    tool_dirs: Optional[str] = typer.Option(
+        None,
+        help="Comma-separated list of directories to discover tools from"
     )
 ):
     """Run the agent with a prompt."""
     try:
         with console.status("[bold green]Initializing agent..."):
             tool_list = tools.split(",") if tools else []
-            agent = create_agent(model_type, model_id, api_key, tool_list, imports, 
-                               tool_local, tool_hub, tool_space, tool_collection)
+            tool_directories = tool_dirs.split(",") if tool_dirs else None
+            
+            agent = create_agent(
+                model_type, model_id, api_key, tool_list, imports, 
+                tool_local, tool_hub, tool_space, tool_collection,
+                tool_directories
+            )
         
         print_prompt_panel(prompt)
         
