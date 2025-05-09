@@ -11,9 +11,9 @@ from rich.markdown import Markdown
 from rich.progress import Progress
 from rich.text import Text
 from rich.table import Table
+import importlib
 
 from smolagents import CodeAgent
-from smolagents.models import InferenceClientModel, OpenAIServerModel, LiteLLMModel, TransformersModel
 from smolagents import WebSearchTool
 
 from . import __version__
@@ -45,26 +45,55 @@ def get_model(model_type, model_id, api_key=None):
     Returns:
         The initialized model instance
     """
+    # Map model_type to the corresponding class name
+    model_class_map = {
+        "inference": "InferenceClientModel",
+        "openai": "OpenAIServerModel",
+        "azure-openai": "AzureOpenAIServerModel",
+        "amazon-bedrock": "AmazonBedrockServerModel",
+        "mlx-lm": "MLXModel",
+        "litellm": "LiteLLMModel",
+        "transformers": "TransformersModel"
+    }
+    
+    if model_type not in model_class_map:
+        raise ValueError(f"Unknown model type: {model_type}")
+    
+    # Dynamically import the appropriate model class
+    model_class_name = model_class_map[model_type]
+    ModelClass = getattr(importlib.import_module("smolagents.models"), model_class_name)
+    
+    # Initialize and return the model based on its type
     if model_type == "inference":
-        return InferenceClientModel(model_id=model_id)
-    elif model_type == "openai":
-        return OpenAIServerModel(
+        return ModelClass(model_id=model_id)
+    elif model_type in ["openai", "azure-openai"]:
+        return ModelClass(
             model_id=model_id,
             api_key=api_key or os.environ.get("OPENAI_API_KEY")
         )
+    elif model_type == "amazon-bedrock":
+        return ModelClass(
+            model_id=model_id,
+            aws_access_key=os.environ.get("AWS_ACCESS_KEY_ID"),
+            aws_secret_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
+            aws_region=os.environ.get("AWS_REGION", "us-east-1")
+        )
     elif model_type == "litellm":
-        return LiteLLMModel(
+        return ModelClass(
             model_id=model_id,
             api_key=api_key or os.environ.get("LITELLM_API_KEY")
         )
     elif model_type == "transformers":
-        return TransformersModel(
+        return ModelClass(
             model_id=model_id,
             max_new_tokens=4096,
             device_map="auto"
         )
-    else:
-        raise ValueError(f"Unknown model type: {model_type}")
+    elif model_type == "mlx-lm":
+        return ModelClass(
+            model_id=model_id,
+            max_tokens=4096
+        )
 
 def create_agent(model_type, model_id, api_key=None, tools=None, imports=None):
     """
@@ -158,7 +187,7 @@ def run(
     prompt: str = typer.Argument(..., help="Text instruction for the agent to process"),
     model_type: str = typer.Option(
         "inference", 
-        help="Type of model to use (inference, openai, litellm, or transformers)"
+        help="Type of model to use (inference, openai, azure-openai, amazon-bedrock, litellm, transformers, mlx-lm)"
     ),
     model_id: str = typer.Option(
         "Qwen/Qwen2.5-Coder-32B-Instruct",
@@ -179,11 +208,7 @@ def run(
 ):
     """Run the agent with a prompt."""
     try:
-        # Add validation for model_type
-        valid_model_types = ["inference", "openai", "litellm", "transformers"]
-        if model_type not in valid_model_types:
-            raise ValueError(f"Invalid model type: {model_type}. Must be one of: {', '.join(valid_model_types)}")
-            
+        # Get the list of valid model types from the model_class_map
         with console.status("[bold green]Initializing agent..."):
             tool_list = tools.split(",") if tools else []
             agent = create_agent(model_type, model_id, api_key, tool_list, imports)
@@ -208,7 +233,7 @@ def run(
     
     except Exception as e:
         error_message = str(e)
-        if "401 Client Error: Unauthorized" in error_message and "Invalid username or password" in error_message:
+        if "401 Client Error: Unauthorized" in error_message:
             console.print(Panel.fit(
                 "[bold red]Authentication Error:[/bold red] Unable to authenticate with Hugging Face.\n\n"
                 "To use Hugging Face models, you need to set your HF_TOKEN environment variable:\n"
