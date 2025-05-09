@@ -1,6 +1,7 @@
 """
 Display module for Xerus package.
 """
+import json
 from rich.console import Console
 from rich.panel import Panel
 from rich.markdown import Markdown
@@ -51,6 +52,12 @@ def print_project_info():
         ("With Hub tool:", "xerus run \"Analyze sentiment\" --tool-hub username/sentiment-tool"),
         ("With Space tool:", "xerus run \"Generate an image\" --tool-space stabilityai/stable-diffusion:image_generator:Generates images from text prompts"),
         ("With tool collection:", "xerus run \"Analyze data\" --tool-collection huggingface-tools/data-analysis"),
+        ("Interactive mode:", "xerus chat --tools web_search"),
+        ("Change output format:", "xerus run \"Tell me a joke\" --output-format json"),
+        ("Save session:", "xerus run \"Explain relativity\" --save-session"),
+        ("Named session:", "xerus chat --session-name physics"),
+        ("List sessions:", "xerus sessions"),
+        ("Load session:", "xerus load physics_20230615_123045")
     ]
     
     # Create the display panel
@@ -111,11 +118,30 @@ def print_project_info():
         "--tool-collection", 
         "Hugging Face Hub repo ID for a collection of tools"
     )
+    options_table.add_row(
+        "--output-format", 
+        "Output format (rich, plain, json, markdown)"
+    )
+    options_table.add_row(
+        "--session-name", 
+        "Name for the current session (used in saved session files)"
+    )
+    options_table.add_row(
+        "--save-session", 
+        "Save the current session to a file for later reference"
+    )
+    options_table.add_row(
+        "--no-history", 
+        "Don't load or save conversation history in chat mode"
+    )
     console.print(options_table)
     
     # Commands help
     console.print("\n[bold]Commands:[/bold]")
     console.print("  [green]xerus run[/green]         Run the agent with a prompt")
+    console.print("  [green]xerus chat[/green]        Start an interactive chat session")
+    console.print("  [green]xerus sessions[/green]    List all saved sessions")
+    console.print("  [green]xerus load[/green]        Load and display a saved session")
     console.print("  [green]xerus --help[/green]      Show help message")
 
 def print_prompt_panel(prompt):
@@ -133,6 +159,35 @@ def print_response_panel(response):
         title="Agent Response",
         border_style="green"
     ))
+
+def print_formatted_response(response, format_type="rich"):
+    """
+    Print the agent response in the specified format
+    
+    Args:
+        response: The response text from the agent
+        format_type: Format type (rich, plain, json, markdown)
+    """
+    format_type = format_type.lower()
+    
+    if format_type == "rich":
+        print_response_panel(response)
+    elif format_type == "plain":
+        console.print("\n--- Agent Response ---")
+        console.print(response)
+        console.print("---------------------\n")
+    elif format_type == "json":
+        # Format as JSON with the response as a string
+        json_response = {
+            "response": response
+        }
+        console.print(json.dumps(json_response, indent=2))
+    elif format_type == "markdown":
+        console.print(Markdown(response))
+    else:
+        # Default to rich format if unknown format specified
+        console.print("[yellow]Unknown format type. Using rich format.[/yellow]")
+        print_response_panel(response)
 
 def print_error_panel(error_type, error_message, title="Error", recovery_hint=None):
     """

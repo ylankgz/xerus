@@ -16,6 +16,12 @@ Run Xerus with a simple prompt:
 xerus run "What is the current weather in New York City?"
 ```
 
+Start an interactive chat session:
+
+```bash
+xerus chat
+```
+
 Enable web search and specific Python packages:
 
 ```bash
@@ -41,27 +47,25 @@ xerus run "Draw me a picture of rivers and lakes" --tool-space huggingface-tools
 ## Features
 
 - Run AI agents from your terminal with simple commands
+- Interactive chat mode with conversation history
 - Support for various LLM providers (Huggingface, OpenAI, etc.)
+- Multiple output formats (rich, plain text, JSON, markdown)
 - Web search capability through smolagents tools
+- Session management with save, load, and list capabilities
 - Load custom tools from various sources:
   - Local Python files
   - Hugging Face Hub
   - Hugging Face Spaces
   - Tool collections
 - Configurable Python package imports for agent code execution
-- Rich terminal output with progress indicators
+- Rich terminal output with enhanced progress indicators
 
 ## Command Options
 
+### Common Options
+
 ```
-Usage: xerus run [OPTIONS] PROMPT
-
-  Run the agent with a prompt.
-
-  PROMPT is the text instruction for the agent to process.
-
-Options:
-  --model-type [inference|openai|litellm|transformers]
+  --model-type [inference|openai|azure-openai|amazon-bedrock|litellm|transformers|mlx-lm]
                                   Type of model to use  [default: inference]
   --model-id TEXT                 ID or name of the model  [default:
                                   Qwen/Qwen2.5-Coder-32B-Instruct]
@@ -75,15 +79,65 @@ Options:
   --tool-space TEXT               Hugging Face Space ID to import as a tool
                                   (format: space_id:name:description)
   --tool-collection TEXT          Hugging Face Hub repo ID for a collection of tools
-  --help                          Show this message and exit.
+  --tool-dirs TEXT                Comma-separated list of directories to discover tools from
+  --output-format [rich|plain|json|markdown]
+                                  Output format  [default: rich]
+```
+
+### Commands
+
+```
+Usage: xerus [OPTIONS] COMMAND [ARGS]...
+
+Commands:
+  run         Run the agent with a prompt
+  chat        Start an interactive chat session
+  sessions    List all saved sessions
+  load        Load and display a saved session
+```
+
+#### Run Command
+
+```bash
+xerus run "Your prompt here" [OPTIONS]
+```
+
+Additional options:
+```
+  --save-session                   Save this session to a file for later reference
+```
+
+#### Chat Command
+
+```bash
+xerus chat [OPTIONS]
+```
+
+Additional options:
+```
+  --no-history                     Don't load or save conversation history
+  --session-name TEXT              Name for this session (used in saved session file)
+```
+
+#### Session Management
+
+```bash
+# List all saved sessions
+xerus sessions
+
+# Load and display a saved session
+xerus load SESSION_FILE [--output-format FORMAT]
 ```
 
 ## Model Types
 
 - `inference`: Uses Huggingface's InferenceClient (default)
 - `openai`: Uses OpenAI API compatible models
+- `azure-openai`: Uses Azure OpenAI API
+- `amazon-bedrock`: Uses Amazon Bedrock API
 - `litellm`: Uses LiteLLM for accessing 100+ LLMs
 - `transformers`: Uses local Transformers models
+- `mlx-lm`: Uses MLX-based models (for Apple Silicon)
 
 ## Example Usage
 
@@ -91,6 +145,18 @@ Search the web and generate a summary:
 
 ```bash
 xerus run "Summarize the latest news about AI regulation" --tools web_search
+```
+
+Start an interactive chat session with web search:
+
+```bash
+xerus chat --tools web_search --session-name ai_discussion
+```
+
+Get output in JSON format:
+
+```bash
+xerus run "What are the top 5 programming languages in 2023?" --output-format json
 ```
 
 Use a specific model:
@@ -125,7 +191,42 @@ Combine multiple tools:
 xerus run "Find news about climate change and generate an infographic" --tools web_search --tool-hub username/infographic-tool --imports matplotlib,pandas
 ```
 
+### Session Management Examples
+
+Save a session:
+
+```bash
+xerus run "Explain quantum physics" --save-session
+```
+
+Start a named interactive session:
+
+```bash
+xerus chat --session-name physics_study
+```
+
+List saved sessions:
+
+```bash
+xerus sessions
+```
+
+Load a session:
+
+```bash
+xerus load physics_study_20230615_123045
+```
+
 See the `examples` directory for more detailed examples and tool templates.
+
+## Interactive Chat Commands
+
+When in chat mode, you can use the following commands:
+
+- `exit` or `quit`: End the chat session
+- `history`: View conversation history
+- `clear`: Clear the conversation history
+- `save`: Save the current session
 
 ## Local Development
 
