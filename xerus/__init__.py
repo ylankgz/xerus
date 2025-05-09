@@ -13,4 +13,15 @@ from .agent import create_agent
 from .tools import ToolManager
 
 # Import custom exceptions for better error handling
-from .models import ModelInitializationError, AuthenticationError
+from .errors import (
+    XerusError,
+    ModelInitializationError, 
+    ModelNotFoundError,
+    ModelConfigurationError,
+    AuthenticationError,
+    ToolError,
+    ToolLoadError,
+    ToolExecutionError,
+    AgentRuntimeError,
+    NetworkError
+)
