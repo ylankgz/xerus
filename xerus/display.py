@@ -134,21 +134,44 @@ def print_response_panel(response):
         border_style="green"
     ))
 
-def print_error_panel(error_type, error_message, title="Error"):
-    """Print an error panel"""
+def print_error_panel(error_type, error_message, title="Error", recovery_hint=None):
+    """
+    Print an error panel with optional recovery hint
+    
+    Args:
+        error_type: Type of error
+        error_message: The error message
+        title: Panel title
+        recovery_hint: Optional recovery hint to help the user resolve the issue
+    """
+    content = f"[bold red]{error_type}:[/bold red] {error_message}"
+    
+    if recovery_hint:
+        content += f"\n\n[bold yellow]Recovery Hint:[/bold yellow] {recovery_hint}"
+    
     console.print(Panel.fit(
-        f"[bold red]{error_type}:[/bold red] {error_message}",
+        content,
         title=title,
         border_style="red"
     ))
 
-def print_auth_error(error_message):
-    """Print authentication error panel with help text"""
-    console.print(Panel.fit(
-        f"[bold red]Authentication Error:[/bold red] {error_message}\n\n"
+def print_auth_error(error_message, recovery_hint=None):
+    """
+    Print authentication error panel with help text
+    
+    Args:
+        error_message: The error message
+        recovery_hint: Optional recovery hint
+    """
+    hint = recovery_hint or (
         "To use Hugging Face models, you need to set your HF_TOKEN environment variable:\n"
         "  export HF_TOKEN=your_huggingface_token\n\n"
-        "You can get your token from: https://huggingface.co/settings/tokens",
+        "You can get your token from: https://huggingface.co/settings/tokens"
+    )
+    
+    console.print(Panel.fit(
+        f"[bold red]Authentication Error:[/bold red] {error_message}\n\n"
+        f"[bold yellow]Recovery Hint:[/bold yellow] {hint}",
         title="Authentication Error",
         border_style="red"
     )) 
