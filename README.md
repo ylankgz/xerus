@@ -152,6 +152,7 @@ OPENAI_API_KEY=your_openai_key_here
 # For LiteLLM models
 LITELLM_API_KEY=your_litellm_key_here
 ```
+> Note: List of supported providers in LiteLLM [here](https://docs.litellm.ai/docs/providers).
 
 2. Secure the file with proper permissions:
 ```bash
@@ -204,7 +205,7 @@ xerus run "Your prompt" --model-type openai --model-id gpt-4 --api-key YOUR_KEY
 ### litellm
 Gateway to 100+ LLMs through LiteLLM.
 ```bash
-xerus run "Your prompt" --model-type litellm --model-id anthropic/claude-3-5-sonnet-latest
+xerus run "Your prompt" --model-type litellm --model-id anthropic/claude-3-7-sonnet-latest
 ```
 - **Environment variable**: `LITELLM_API_KEY`
 - **Key parameters**:

@@ -14,9 +14,243 @@ from smolagents import (
     DuckDuckGoSearchTool, GoogleSearchTool, VisitWebpageTool
 )
 
-from .errors import ToolLoadError
+from .errors import ToolLoadError, AuthenticationError
 
 console = Console()
+
+class ToolLoader:
+    """Base class for tool loading strategies"""
+    def load(self, spec: str, **kwargs) -> Union[Tool, List[Tool]]:
+        """
+        Load a tool or tools based on a specification.
+        
+        Args:
+            spec: The specification for the tool
+            **kwargs: Additional arguments for loading
+            
+        Returns:
+            Loaded tool(s)
+            
+        Raises:
+            ToolLoadError: If the tool cannot be loaded
+        """
+        raise NotImplementedError("Subclasses must implement this method")
+
+class BuiltInToolLoader(ToolLoader):
+    """Loader for built-in tools"""
+    def __init__(self, tool_registry: Dict[str, Tool]):
+        """
+        Initialize with a registry of available built-in tools.
+        
+        Args:
+            tool_registry: Dictionary mapping tool names to Tool instances
+        """
+        self.tool_registry = tool_registry
+        
+    def load(self, spec: str, **kwargs) -> Tool:
+        """
+        Load a built-in tool by name.
+        
+        Args:
+            spec: The name of the built-in tool
+            
+        Returns:
+            The built-in tool
+            
+        Raises:
+            ToolLoadError: If the built-in tool is not found
+        """
+        if spec not in self.tool_registry:
+            raise ToolLoadError(
+                f"Built-in tool not found: {spec}",
+                "Available built-in tools: " + ", ".join(self.tool_registry.keys())
+            )
+        return self.tool_registry[spec]
+
+class LocalFileToolLoader(ToolLoader):
+    """Loader for tools defined in local Python files"""
+    def load(self, spec: str, **kwargs) -> List[Tool]:
+        """
+        Load tools from a local Python file.
+        
+        Args:
+            spec: Path to the Python file containing tool definitions
+            
+        Returns:
+            List of loaded tools
+            
+        Raises:
+            ToolLoadError: If the file cannot be loaded or contains no tools
+        """
+        try:
+            console.print(f"[bold blue]Loading tool from local file: {spec}[/bold blue]")
+            # Import the module dynamically
+            file_path = spec
+            spec_obj = importlib.util.spec_from_file_location("local_tool", file_path)
+            if not spec_obj:
+                raise ToolLoadError(
+                    f"Could not load spec from file: {file_path}",
+                    "Ensure the file exists and is a valid Python module"
+                )
+                
+            local_tool_module = importlib.util.module_from_spec(spec_obj)
+            spec_obj.loader.exec_module(local_tool_module)
+            
+            # Find Tool instances in the module
+            loaded_tools = []
+            for name in dir(local_tool_module):
+                obj = getattr(local_tool_module, name)
+                if isinstance(obj, Tool):
+                    loaded_tools.append(obj)
+            
+            if not loaded_tools:
+                raise ToolLoadError(
+                    f"No Tool instances found in {file_path}",
+                    "Ensure the file contains properly defined Tool instances"
+                )
+                
+            return loaded_tools
+            
+        except ToolLoadError:
+            raise
+        except Exception as e:
+            raise ToolLoadError(f"Error loading tool from local file: {str(e)}")
+
+class HubToolLoader(ToolLoader):
+    """Loader for tools from Hugging Face Hub"""
+    def load(self, spec: str, **kwargs) -> Tool:
+        """
+        Load a tool from Hugging Face Hub.
+        
+        Args:
+            spec: Hugging Face Hub repository ID
+            
+        Returns:
+            The loaded tool
+            
+        Raises:
+            ToolLoadError: If the tool cannot be loaded
+        """
+        try:
+            repo_id = spec
+            console.print(f"[bold blue]Loading tool from Hugging Face Hub: {repo_id}[/bold blue]")
+            
+            token = os.environ.get("HF_TOKEN")
+            # Check if token is required but not provided
+            if not token:
+                raise AuthenticationError(
+                    "No Hugging Face token provided for loading Hub tool",
+                    "Set the HF_TOKEN environment variable or provide it directly"
+                )
+            
+            hub_tool = load_tool(
+                repo_id,
+                trust_remote_code=True,
+                token=token
+            )
+            return hub_tool
+        except Exception as e:
+            raise ToolLoadError(
+                f"Error loading tool from Hub ({repo_id}): {str(e)}",
+                "Check that the tool exists and you have proper permissions"
+            )
+
+class SpaceToolLoader(ToolLoader):
+    """Loader for tools from Hugging Face Spaces"""
+    def load(self, spec: str, **kwargs) -> Tool:
+        """
+        Load a tool from Hugging Face Space.
+        
+        Args:
+            spec: Hugging Face Space ID
+            **kwargs: May include 'name' and 'description' for the tool
+            
+        Returns:
+            The loaded tool
+            
+        Raises:
+            ToolLoadError: If the tool cannot be loaded
+        """
+        try:
+            space_id = spec
+            name = kwargs.get("name") or "space_tool"
+            description = kwargs.get("description") or f"Tool from Space {space_id}"
+            
+            console.print(f"[bold blue]Loading tool from Hugging Face Space: {space_id}[/bold blue]")
+            
+            token = os.environ.get("HF_TOKEN")
+            # Check if token is required but not provided
+            if not token:
+                raise AuthenticationError(
+                    "No Hugging Face token provided for loading Space tool",
+                    "Set the HF_TOKEN environment variable or provide it directly"
+                )
+                
+            
+            space_tool = Tool.from_space(
+                space_id,
+                name=name,
+                description=description,
+                token=token,
+                trust_remote_code=True
+            )
+            return space_tool
+        except Exception as e:
+            raise ToolLoadError(
+                f"Error loading tool from Space ({space_id}): {str(e)}",
+                "Check that the Space exists and is properly configured as a tool"
+            )
+
+class CollectionToolLoader(ToolLoader):
+    """Loader for tool collections from Hugging Face Hub"""
+    def load(self, spec: str, **kwargs) -> List[Tool]:
+        """
+        Load tools from a Hugging Face Hub tool collection.
+        
+        Args:
+            spec: Hugging Face Hub repository ID for the tool collection
+            
+        Returns:
+            List of loaded tools
+            
+        Raises:
+            ToolLoadError: If the collection cannot be loaded or contains no tools
+        """
+        try:
+            collection_slug = spec
+            console.print(f"[bold blue]Loading tool collection from Hub: {collection_slug}[/bold blue]")
+            
+            token = os.environ.get("HF_TOKEN")
+            # Check if token is required but not provided
+            if not token:
+                raise AuthenticationError(
+                    "No Hugging Face token provided for loading tool collection",
+                    "Set the HF_TOKEN environment variable or provide it directly"
+                )
+            collection = ToolCollection.from_hub(
+                collection_slug=collection_slug,
+                trust_remote_code=True,
+                token=token
+            )
+            
+            if not collection.tools:
+                raise ToolLoadError(
+                    f"No tools found in collection: {collection_slug}",
+                    "Verify that the collection exists and contains valid tools"
+                )
+                
+            # Return all tools from the collection
+            loaded_tools = list(collection.tools)
+            console.print(f"[green]Successfully loaded tool collection with {len(loaded_tools)} tools[/green]")
+            return loaded_tools
+            
+        except ToolLoadError:
+            raise
+        except Exception as e:
+            raise ToolLoadError(
+                f"Error loading tool collection ({collection_slug}): {str(e)}",
+                "Check that the collection exists and you have proper permissions"
+            )
 
 class ToolManager:
     """
@@ -33,6 +267,7 @@ class ToolManager:
         """Initialize the ToolManager with an empty registry."""
         self.tools: Dict[str, Tool] = {}
         self._register_built_in_tools()
+        self._init_loaders()
     
     def _register_built_in_tools(self):
         """Register built-in tools that are always available."""
@@ -47,6 +282,16 @@ class ToolManager:
         self.tools["visit_webpage"] = VisitWebpageTool()
         
         console.print("[green]Registered all default smolagents tools[/green]")
+    
+    def _init_loaders(self):
+        """Initialize tool loaders for different tool types"""
+        self.loaders = {
+            "built_in": BuiltInToolLoader(self.tools),
+            "local": LocalFileToolLoader(),
+            "hub": HubToolLoader(),
+            "space": SpaceToolLoader(),
+            "collection": CollectionToolLoader()
+        }
     
     def get_tool(self, tool_name: str) -> Optional[Tool]:
         """
@@ -104,43 +349,15 @@ class ToolManager:
         Raises:
             ToolLoadError: If the file cannot be loaded or contains no tools
         """
-        try:
-            console.print(f"[bold blue]Loading tool from local file: {file_path}[/bold blue]")
-            # Import the module dynamically
-            spec = importlib.util.spec_from_file_location("local_tool", file_path)
-            if not spec:
-                raise ToolLoadError(
-                    f"Could not load spec from file: {file_path}",
-                    "Ensure the file exists and is a valid Python module"
-                )
-                
-            local_tool_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(local_tool_module)
-            
-            # Find Tool instances in the module
-            loaded_tools = []
-            for name in dir(local_tool_module):
-                obj = getattr(local_tool_module, name)
-                if isinstance(obj, Tool):
-                    self.register_tool(obj)
-                    loaded_tools.append(obj)
-            
-            if not loaded_tools:
-                raise ToolLoadError(
-                    f"No Tool instances found in {file_path}",
-                    "Ensure the file contains properly defined Tool instances"
-                )
-                
-            return loaded_tools
-            
-        except ToolLoadError:
-            raise
-        except Exception as e:
-            raise ToolLoadError(f"Error loading tool from local file: {str(e)}")
+        tools = self.loaders["local"].load(file_path)
+        for tool in tools:
+            self.register_tool(tool)
+        return tools
     
     def load_from_hub(self, repo_id: str) -> Tool:
         """
         Load a tool from Hugging Face Hub.
+        Loading a tool means that you'll download the tool and execute it locally. ALWAYS inspect the tool you're downloading before loading it within your runtime, as you would do when installing a package using pip/npm/apt.
         
         Args:
             repo_id: Hugging Face Hub repository ID
@@ -151,16 +368,9 @@ class ToolManager:
         Raises:
             ToolLoadError: If the tool cannot be loaded
         """
-        try:
-            console.print(f"[bold blue]Loading tool from Hugging Face Hub: {repo_id}[/bold blue]")
-            hub_tool = load_tool(repo_id, trust_remote_code=True, token=os.environ.get("HF_TOKEN"))
-            self.register_tool(hub_tool)
-            return hub_tool
-        except Exception as e:
-            raise ToolLoadError(
-                f"Error loading tool from Hub ({repo_id}): {str(e)}",
-                "Check that the tool exists and you have proper permissions"
-            )
+        tool = self.loaders["hub"].load(repo_id)
+        self.register_tool(tool)
+        return tool
     
     def load_from_space(self, space_id: str, name: Optional[str] = None, 
                        description: Optional[str] = None) -> Tool:
@@ -178,19 +388,9 @@ class ToolManager:
         Raises:
             ToolLoadError: If the tool cannot be loaded
         """
-        try:
-            name = name or "space_tool"
-            description = description or f"Tool from Space {space_id}"
-            
-            console.print(f"[bold blue]Loading tool from Hugging Face Space: {space_id}[/bold blue]")
-            space_tool = Tool.from_space(space_id, name=name, description=description, token=os.environ.get("HF_TOKEN"))
-            self.register_tool(space_tool)
-            return space_tool
-        except Exception as e:
-            raise ToolLoadError(
-                f"Error loading tool from Space ({space_id}): {str(e)}",
-                "Check that the Space exists and is properly configured as a tool"
-            )
+        tool = self.loaders["space"].load(space_id, name=name, description=description)
+        self.register_tool(tool)
+        return tool
     
     def load_from_collection(self, collection_slug: str) -> List[Tool]:
         """
@@ -198,6 +398,7 @@ class ToolManager:
         
         Args:
             collection_slug: Hugging Face Hub repository ID for the tool collection
+            trust_remote_code (defaults to False) — Whether to trust the remote code.
             
         Returns:
             List of loaded tools
@@ -205,32 +406,10 @@ class ToolManager:
         Raises:
             ToolLoadError: If the collection cannot be loaded or contains no tools
         """
-        try:
-            console.print(f"[bold blue]Loading tool collection from Hub: {collection_slug}[/bold blue]")
-            collection = ToolCollection.from_hub(collection_slug=collection_slug, trust_remote_code=True, token=os.environ.get("HF_TOKEN"))
-            
-            if not collection.tools:
-                raise ToolLoadError(
-                    f"No tools found in collection: {collection_slug}",
-                    "Verify that the collection exists and contains valid tools"
-                )
-                
-            # Add all tools from the collection
-            loaded_tools = []
-            for tool in collection.tools:
-                self.register_tool(tool)
-                loaded_tools.append(tool)
-                
-            console.print(f"[green]Successfully loaded tool collection with {len(loaded_tools)} tools[/green]")
-            return loaded_tools
-            
-        except ToolLoadError:
-            raise
-        except Exception as e:
-            raise ToolLoadError(
-                f"Error loading tool collection ({collection_slug}): {str(e)}",
-                "Check that the collection exists and you have proper permissions"
-            )
+        tools = self.loaders["collection"].load(collection_slug)
+        for tool in tools:
+            self.register_tool(tool)
+        return tools
     
     def discover_tools(self, directory: str) -> List[Tool]:
         """
@@ -321,7 +500,7 @@ class ToolManager:
         parsed = self.parse_tool_spec(tool_spec)
         
         if parsed["type"] == "built_in":
-            return self.get_tool(parsed["name"])
+            return self.loaders["built_in"].load(parsed["name"])
         elif parsed["type"] == "local":
             return self.load_from_local_file(parsed["path"])
         elif parsed["type"] == "hub":
