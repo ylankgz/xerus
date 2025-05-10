@@ -8,4 +8,20 @@ search the web, and execute code, all powered by large language models.
 __version__ = "0.1.0"
 
 # Import key functions to make them available at package level
-from .cli import create_agent, cli, run 
+from .cli import cli, run
+from .agent import create_agent
+from .tools import ToolManager
+
+# Import custom exceptions for better error handling
+from .errors import (
+    XerusError,
+    ModelInitializationError, 
+    ModelNotFoundError,
+    ModelConfigurationError,
+    AuthenticationError,
+    ToolError,
+    ToolLoadError,
+    ToolExecutionError,
+    AgentRuntimeError,
+    NetworkError
+)
