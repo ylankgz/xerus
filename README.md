@@ -129,15 +129,100 @@ xerus sessions
 xerus load SESSION_FILE [--output-format FORMAT]
 ```
 
+## API Key Management
+
+For securely storing API keys across terminal sessions, Xerus supports loading environment variables from a `.env` file. This is especially useful for remote servers or when you need persistent configuration.
+
+### Setting up environment variables with dotenv
+
+1. Create a `.env` file in your project root:
+```bash
+# For Hugging Face models (default)
+HF_TOKEN=your_huggingface_token_here
+
+# For OpenAI Compatible models
+OPENAI_API_KEY=your_openai_key_here
+
+# For LiteLLM models
+LITELLM_API_KEY=your_litellm_key_here
+```
+
+2. Secure the file with proper permissions:
+```bash
+chmod 600 .env
+```
+
+3. Add to your `.gitignore` to prevent accidental commits:
+```bash
+echo ".env" >> .gitignore
+```
+
+The appropriate environment variables will be automatically loaded when running Xerus commands, allowing you to omit the `--api-key` parameter.
+
+### Sample .env file
+
+A sample `.env.example` file is included in the repository. You can copy it to create your own configuration:
+
+```bash
+cp .env.example .env
+```
+
+Then edit the `.env` file to add your API keys.
+
 ## Model Types
 
-- `inference`: Uses Huggingface's InferenceClient (default)
-- `openai`: Uses OpenAI API compatible models
-- `azure-openai`: Uses Azure OpenAI API
-- `amazon-bedrock`: Uses Amazon Bedrock API
-- `litellm`: Uses LiteLLM for accessing 100+ LLMs
-- `transformers`: Uses local Transformers models
-- `mlx-lm`: Uses MLX-based models (for Apple Silicon)
+Xerus supports multiple model types through different backends. Configure them using `--model-type` and appropriate parameters:
+
+### inference
+Default model type using Hugging Face's InferenceClient.
+```bash
+xerus run "Your prompt" --model-type inference --model-id Qwen/Qwen2.5-Coder-32B-Instruct
+```
+- **Environment variable**: `HF_TOKEN`
+- **Default model**: Qwen/Qwen2.5-Coder-32B-Instruct
+- **Key parameters**:
+  - `--model-id`: Model ID on Hugging Face Hub
+  - `--api-key`: HF token (or use HF_TOKEN env var)
+
+### openai
+Uses OpenAI API compatible models.
+```bash
+xerus run "Your prompt" --model-type openai --model-id gpt-4 --api-key YOUR_KEY
+```
+- **Environment variable**: `OPENAI_API_KEY`
+- **Key parameters**:
+  - `--model-id`: Model name (e.g., "gpt-4", "gpt-3.5-turbo")
+  - `--api-key`: OpenAI API key
+  - `--api-base`: Optional custom API endpoint
+
+### litellm
+Gateway to 100+ LLMs through LiteLLM.
+```bash
+xerus run "Your prompt" --model-type litellm --model-id anthropic/claude-3-5-sonnet-latest
+```
+- **Environment variable**: `LITELLM_API_KEY`
+- **Key parameters**:
+  - `--model-id`: LiteLLM model identifier
+  - `--api-key`: LiteLLM API key
+  - `--api-base`: Optional custom API endpoint
+
+### transformers
+Runs models locally using the Transformers library.
+```bash
+xerus run "Your prompt" --model-type transformers --model-id mistralai/Mistral-7B-Instruct-v0.2
+```
+- **Key parameters**:
+  - `--model-id`: Model ID on Hugging Face Hub
+  - `--device-map`: Device to run model on (e.g., "auto", "cpu")
+  - `--trust-remote-code`: Whether to trust remote code (boolean flag)
+
+### mlx-lm
+Optimized for Apple Silicon using the MLX framework.
+```bash
+xerus run "Your prompt" --model-type mlx-lm --model-id HuggingFaceTB/SmolLM-135M-Instruct
+```
+- **Key parameters**:
+  - `--model-id`: MLX-compatible model ID
 
 ## Example Usage
 
