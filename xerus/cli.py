@@ -12,6 +12,19 @@ from rich.markdown import Markdown
 from pathlib import Path
 from datetime import datetime
 
+import warnings
+
+# Try to load environment variables from .env file if python-dotenv is installed
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # Not raising an error since dotenv is optional
+    warnings.warn(
+        "python-dotenv package not installed. Environment variables from .env files will not be loaded. "
+        "Install with: pip install python-dotenv"
+    )
+
 from . import __version__
 from .agent import create_agent, EnhancedAgent
 from .display import (

@@ -8,7 +8,11 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union, Any
 
 from rich.console import Console
-from smolagents import Tool, WebSearchTool, ToolCollection, load_tool
+from smolagents import (
+    Tool, WebSearchTool, ToolCollection, load_tool,
+    PythonInterpreterTool, FinalAnswerTool, UserInputTool,
+    DuckDuckGoSearchTool, GoogleSearchTool, VisitWebpageTool
+)
 
 from .errors import ToolLoadError
 
@@ -34,6 +38,15 @@ class ToolManager:
         """Register built-in tools that are always available."""
         # Register the web search tool with a consistent key
         self.tools["web_search"] = WebSearchTool()
+        # Register additional default tools
+        self.tools["python_interpreter"] = PythonInterpreterTool()
+        self.tools["final_answer"] = FinalAnswerTool()
+        self.tools["user_input"] = UserInputTool()
+        self.tools["duckduckgo_search"] = DuckDuckGoSearchTool()
+        self.tools["google_search"] = GoogleSearchTool()
+        self.tools["visit_webpage"] = VisitWebpageTool()
+        
+        console.print("[green]Registered all default smolagents tools[/green]")
     
     def get_tool(self, tool_name: str) -> Optional[Tool]:
         """
@@ -140,7 +153,7 @@ class ToolManager:
         """
         try:
             console.print(f"[bold blue]Loading tool from Hugging Face Hub: {repo_id}[/bold blue]")
-            hub_tool = load_tool(repo_id, trust_remote_code=True)
+            hub_tool = load_tool(repo_id, trust_remote_code=True, token=os.environ.get("HF_TOKEN"))
             self.register_tool(hub_tool)
             return hub_tool
         except Exception as e:
@@ -170,7 +183,7 @@ class ToolManager:
             description = description or f"Tool from Space {space_id}"
             
             console.print(f"[bold blue]Loading tool from Hugging Face Space: {space_id}[/bold blue]")
-            space_tool = Tool.from_space(space_id, name=name, description=description)
+            space_tool = Tool.from_space(space_id, name=name, description=description, token=os.environ.get("HF_TOKEN"))
             self.register_tool(space_tool)
             return space_tool
         except Exception as e:
@@ -194,7 +207,7 @@ class ToolManager:
         """
         try:
             console.print(f"[bold blue]Loading tool collection from Hub: {collection_slug}[/bold blue]")
-            collection = ToolCollection.from_hub(collection_slug=collection_slug, trust_remote_code=True)
+            collection = ToolCollection.from_hub(collection_slug=collection_slug, trust_remote_code=True, token=os.environ.get("HF_TOKEN"))
             
             if not collection.tools:
                 raise ToolLoadError(
@@ -251,7 +264,7 @@ class ToolManager:
         Parse a tool specification string into components.
         
         The tool spec can be in formats:
-        - "web_search" - For built-in tools
+        - ["web_search", "python_interpreter", "final_answer", "user_input", "duckduckgo_search", "google_search", "visit_webpage"] - For built-in tools
         - "path/to/file.py" - For local files
         - "hub:repo_id" - For Hugging Face Hub tools
         - "space:space_id:name:description" - For Hugging Face Spaces

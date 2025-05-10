@@ -50,8 +50,14 @@ xerus run "Draw me a picture of rivers and lakes" --tool-space huggingface-tools
 - Interactive chat mode with conversation history
 - Support for various LLM providers (Huggingface, OpenAI, etc.)
 - Multiple output formats (rich, plain text, JSON, markdown)
-- Web search capability through smolagents tools
-- Session management with save, load, and list capabilities
+- Built-in tools including:
+  - `web_search`: Search the web for information
+  - `python_interpreter`: Execute Python code
+  - `final_answer`: Provide a final answer to a question
+  - `user_input`: Request input from the user
+  - `duckduckgo_search`: Search using DuckDuckGo
+  - `google_search`: Search using Google
+  - `visit_webpage`: Load and extract content from a webpage
 - Load custom tools from various sources:
   - Local Python files
   - Hugging Face Hub
@@ -234,10 +240,28 @@ Search the web and generate a summary:
 xerus run "Summarize the latest news about AI regulation" --tools web_search
 ```
 
+Execute Python code directly:
+
+```bash
+xerus run "Calculate the factorial of 10" --tools python_interpreter
+```
+
+Use Google search specifically:
+
+```bash
+xerus run "Find information about climate change" --tools google_search
+```
+
+Visit and extract content from a webpage:
+
+```bash
+xerus run "Summarize the content from https://huggingface.co/blog" --tools visit_webpage
+```
+
 Start an interactive chat session with web search:
 
 ```bash
-xerus chat --tools web_search --session-name ai_discussion
+xerus chat --tools web_search,python_interpreter --session-name ai_discussion
 ```
 
 Get output in JSON format:

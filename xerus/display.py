@@ -134,7 +134,7 @@ def print_project_info():
     )
     options_table.add_row(
         "--tools", 
-        "Comma-separated tools list (currently supported: web_search)"
+        "Comma-separated tools list (currently supported: web_search, python_interpreter, final_answer, user_input, duckduckgo_search, google_search, visit_webpage)"
     )
     options_table.add_row(
         "--imports", 
