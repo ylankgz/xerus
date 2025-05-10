@@ -1,256 +1,27 @@
 """
-Tool management module for Xerus package.
+Tool management functionality for Xerus agents.
 """
-import importlib
-import importlib.util
 import os
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Any
 
 from rich.console import Console
 from smolagents import (
-    Tool, WebSearchTool, ToolCollection, load_tool,
-    PythonInterpreterTool, FinalAnswerTool, UserInputTool,
-    DuckDuckGoSearchTool, GoogleSearchTool, VisitWebpageTool
+    Tool, WebSearchTool, ToolCollection, PythonInterpreterTool, 
+    FinalAnswerTool, UserInputTool, DuckDuckGoSearchTool, 
+    GoogleSearchTool, VisitWebpageTool
 )
 
-from .errors import ToolLoadError, AuthenticationError
+from ..errors import ToolLoadError, AuthenticationError
+from .base import ToolLoader
+from .built_in import BuiltInToolLoader
+from .local import LocalFileToolLoader
+from .hub import HubToolLoader
+from .space import SpaceToolLoader
+from .collection import CollectionToolLoader
 
 console = Console()
 
-class ToolLoader:
-    """Base class for tool loading strategies"""
-    def load(self, spec: str, **kwargs) -> Union[Tool, List[Tool]]:
-        """
-        Load a tool or tools based on a specification.
-        
-        Args:
-            spec: The specification for the tool
-            **kwargs: Additional arguments for loading
-            
-        Returns:
-            Loaded tool(s)
-            
-        Raises:
-            ToolLoadError: If the tool cannot be loaded
-        """
-        raise NotImplementedError("Subclasses must implement this method")
-
-class BuiltInToolLoader(ToolLoader):
-    """Loader for built-in tools"""
-    def __init__(self, tool_registry: Dict[str, Tool]):
-        """
-        Initialize with a registry of available built-in tools.
-        
-        Args:
-            tool_registry: Dictionary mapping tool names to Tool instances
-        """
-        self.tool_registry = tool_registry
-        
-    def load(self, spec: str, **kwargs) -> Tool:
-        """
-        Load a built-in tool by name.
-        
-        Args:
-            spec: The name of the built-in tool
-            
-        Returns:
-            The built-in tool
-            
-        Raises:
-            ToolLoadError: If the built-in tool is not found
-        """
-        if spec not in self.tool_registry:
-            raise ToolLoadError(
-                f"Built-in tool not found: {spec}",
-                "Available built-in tools: " + ", ".join(self.tool_registry.keys())
-            )
-        return self.tool_registry[spec]
-
-class LocalFileToolLoader(ToolLoader):
-    """Loader for tools defined in local Python files"""
-    def load(self, spec: str, **kwargs) -> List[Tool]:
-        """
-        Load tools from a local Python file.
-        
-        Args:
-            spec: Path to the Python file containing tool definitions
-            
-        Returns:
-            List of loaded tools
-            
-        Raises:
-            ToolLoadError: If the file cannot be loaded or contains no tools
-        """
-        try:
-            console.print(f"[bold blue]Loading tool from local file: {spec}[/bold blue]")
-            # Import the module dynamically
-            file_path = spec
-            spec_obj = importlib.util.spec_from_file_location("local_tool", file_path)
-            if not spec_obj:
-                raise ToolLoadError(
-                    f"Could not load spec from file: {file_path}",
-                    "Ensure the file exists and is a valid Python module"
-                )
-                
-            local_tool_module = importlib.util.module_from_spec(spec_obj)
-            spec_obj.loader.exec_module(local_tool_module)
-            
-            # Find Tool instances in the module
-            loaded_tools = []
-            for name in dir(local_tool_module):
-                obj = getattr(local_tool_module, name)
-                if isinstance(obj, Tool):
-                    loaded_tools.append(obj)
-            
-            if not loaded_tools:
-                raise ToolLoadError(
-                    f"No Tool instances found in {file_path}",
-                    "Ensure the file contains properly defined Tool instances"
-                )
-                
-            return loaded_tools
-            
-        except ToolLoadError:
-            raise
-        except Exception as e:
-            raise ToolLoadError(f"Error loading tool from local file: {str(e)}")
-
-class HubToolLoader(ToolLoader):
-    """Loader for tools from Hugging Face Hub"""
-    def load(self, spec: str, **kwargs) -> Tool:
-        """
-        Load a tool from Hugging Face Hub.
-        
-        Args:
-            spec: Hugging Face Hub repository ID
-            
-        Returns:
-            The loaded tool
-            
-        Raises:
-            ToolLoadError: If the tool cannot be loaded
-        """
-        try:
-            repo_id = spec
-            console.print(f"[bold blue]Loading tool from Hugging Face Hub: {repo_id}[/bold blue]")
-            
-            token = os.environ.get("HF_TOKEN")
-            # Check if token is required but not provided
-            if not token:
-                raise AuthenticationError(
-                    "No Hugging Face token provided for loading Hub tool",
-                    "Set the HF_TOKEN environment variable or provide it directly"
-                )
-            
-            hub_tool = load_tool(
-                repo_id,
-                trust_remote_code=True,
-                token=token
-            )
-            return hub_tool
-        except Exception as e:
-            raise ToolLoadError(
-                f"Error loading tool from Hub ({repo_id}): {str(e)}",
-                "Check that the tool exists and you have proper permissions"
-            )
-
-class SpaceToolLoader(ToolLoader):
-    """Loader for tools from Hugging Face Spaces"""
-    def load(self, spec: str, **kwargs) -> Tool:
-        """
-        Load a tool from Hugging Face Space.
-        
-        Args:
-            spec: Hugging Face Space ID
-            **kwargs: May include 'name' and 'description' for the tool
-            
-        Returns:
-            The loaded tool
-            
-        Raises:
-            ToolLoadError: If the tool cannot be loaded
-        """
-        try:
-            space_id = spec
-            name = kwargs.get("name") or "space_tool"
-            description = kwargs.get("description") or f"Tool from Space {space_id}"
-            
-            console.print(f"[bold blue]Loading tool from Hugging Face Space: {space_id}[/bold blue]")
-            
-            token = os.environ.get("HF_TOKEN")
-            # Check if token is required but not provided
-            if not token:
-                raise AuthenticationError(
-                    "No Hugging Face token provided for loading Space tool",
-                    "Set the HF_TOKEN environment variable or provide it directly"
-                )
-                
-            
-            space_tool = Tool.from_space(
-                space_id,
-                name=name,
-                description=description,
-                token=token,
-                trust_remote_code=True
-            )
-            return space_tool
-        except Exception as e:
-            raise ToolLoadError(
-                f"Error loading tool from Space ({space_id}): {str(e)}",
-                "Check that the Space exists and is properly configured as a tool"
-            )
-
-class CollectionToolLoader(ToolLoader):
-    """Loader for tool collections from Hugging Face Hub"""
-    def load(self, spec: str, **kwargs) -> List[Tool]:
-        """
-        Load tools from a Hugging Face Hub tool collection.
-        
-        Args:
-            spec: Hugging Face Hub repository ID for the tool collection
-            
-        Returns:
-            List of loaded tools
-            
-        Raises:
-            ToolLoadError: If the collection cannot be loaded or contains no tools
-        """
-        try:
-            collection_slug = spec
-            console.print(f"[bold blue]Loading tool collection from Hub: {collection_slug}[/bold blue]")
-            
-            token = os.environ.get("HF_TOKEN")
-            # Check if token is required but not provided
-            if not token:
-                raise AuthenticationError(
-                    "No Hugging Face token provided for loading tool collection",
-                    "Set the HF_TOKEN environment variable or provide it directly"
-                )
-            collection = ToolCollection.from_hub(
-                collection_slug=collection_slug,
-                trust_remote_code=True,
-                token=token
-            )
-            
-            if not collection.tools:
-                raise ToolLoadError(
-                    f"No tools found in collection: {collection_slug}",
-                    "Verify that the collection exists and contains valid tools"
-                )
-                
-            # Return all tools from the collection
-            loaded_tools = list(collection.tools)
-            console.print(f"[green]Successfully loaded tool collection with {len(loaded_tools)} tools[/green]")
-            return loaded_tools
-            
-        except ToolLoadError:
-            raise
-        except Exception as e:
-            raise ToolLoadError(
-                f"Error loading tool collection ({collection_slug}): {str(e)}",
-                "Check that the collection exists and you have proper permissions"
-            )
 
 class ToolManager:
     """

@@ -8,7 +8,7 @@ from rich.console import Console
 from smolagents import CodeAgent
 
 from .models import get_model
-from .tools import ToolManager
+from .tools.manager import ToolManager
 from .errors import (
     ToolLoadError,
     ToolExecutionError,
