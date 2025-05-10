@@ -211,6 +211,7 @@ Runs models locally using the Transformers library.
 ```bash
 xerus run "Your prompt" --model-type transformers --model-id mistralai/Mistral-7B-Instruct-v0.2
 ```
+- **Requirements**: You must have `transformers` and `torch` installed
 - **Key parameters**:
   - `--model-id`: Model ID on Hugging Face Hub
   - `--device-map`: Device to run model on (e.g., "auto", "cpu")
@@ -221,6 +222,7 @@ Optimized for Apple Silicon using the MLX framework.
 ```bash
 xerus run "Your prompt" --model-type mlx-lm --model-id HuggingFaceTB/SmolLM-135M-Instruct
 ```
+- **Requirements**: Apple Silicon Mac with `mlx` and `mlx-lm` installed
 - **Key parameters**:
   - `--model-id`: MLX-compatible model ID
 

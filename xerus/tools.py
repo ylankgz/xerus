@@ -4,7 +4,6 @@ Tool management module for Xerus package.
 import importlib
 import importlib.util
 import os
-import pkgutil
 from pathlib import Path
 from typing import Dict, List, Optional, Union, Any
 

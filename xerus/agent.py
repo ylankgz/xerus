@@ -1,10 +1,8 @@
 """
 Agent module for Xerus package.
 """
-import importlib
 import importlib.util
-import time
-from typing import List, Optional, Dict, Any, Callable
+from typing import Optional, Callable
 
 from rich.console import Console
 from smolagents import CodeAgent
@@ -22,7 +20,11 @@ console = Console()
 
 def create_agent(model_type, model_id, api_key=None, tools=None, imports=None, 
                tool_local=None, tool_hub=None, tool_space=None, tool_collection=None,
-               tool_dirs=None, progress_callback: Optional[Callable[[str, float], None]] = None):
+               tool_dirs=None, progress_callback: Optional[Callable[[str, float], None]] = None,
+               api_base=None, organization=None, project=None, client_kwargs=None,
+               custom_role_conversions=None, flatten_messages_as_text=False,
+               tool_name_key=None, tool_arguments_key=None, trust_remote_code=False,
+               **kwargs):
     """
     Create a CodeAgent with specified model and tools.
     
@@ -38,6 +40,16 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None,
         tool_collection: Hugging Face Hub repo ID for a collection of tools
         tool_dirs: List of directories to discover tools from
         progress_callback: Optional callback function for progress updates
+        api_base: The base URL of the API server (for OpenAI and similar APIs)
+        organization: The organization to use for the API request (for OpenAI)
+        project: The project to use for the API request
+        client_kwargs: Additional keyword arguments to pass to the client
+        custom_role_conversions: Custom role conversion mapping (for OpenAI)
+        flatten_messages_as_text: Whether to flatten messages as text (for OpenAI)
+        tool_name_key: The key for retrieving a tool name (for transformers/MLX models)
+        tool_arguments_key: The key for retrieving tool arguments (for transformers/MLX models)
+        trust_remote_code: Whether to trust remote code for models (for transformers/MLX models)
+        **kwargs: Additional model-specific arguments
     
     Returns:
         The initialized CodeAgent
@@ -55,7 +67,21 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None,
             console.print(f"[dim]{message}[/dim]")
     
     update_progress("Initializing model...", 0.1)
-    model = get_model(model_type, model_id, api_key)
+    model = get_model(
+        model_type, 
+        model_id, 
+        api_key=api_key,
+        api_base=api_base,
+        organization=organization,
+        project=project,
+        client_kwargs=client_kwargs,
+        custom_role_conversions=custom_role_conversions,
+        flatten_messages_as_text=flatten_messages_as_text,
+        tool_name_key=tool_name_key,
+        tool_arguments_key=tool_arguments_key,
+        trust_remote_code=trust_remote_code,
+        **kwargs
+    )
     
     update_progress("Setting up tool manager...", 0.2)
     # Initialize the tool manager

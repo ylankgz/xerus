@@ -46,8 +46,9 @@ def print_project_info():
         ("Basic usage:", "xerus run \"What is the current weather in New York City?\""),
         ("With web search:", "xerus run \"Find the latest news about AI\" --tools web_search"),
         ("With specific imports:", "xerus run \"Create a plot of sin(x)\" --imports \"numpy matplotlib\""),
-        ("Use OpenAI model:", "xerus run \"Explain quantum computing\" --model-type openai --model-id gpt-4"),
+        ("Use OpenAI model:", "xerus run \"Explain quantum computing\" --model-type openai --model-id gpt-4 --api-key YOUR_API_KEY"),
         ("Use Mixtral model:", "xerus run \"Write a Python script\" --model-type inference --model-id mistralai/Mixtral-8x7B-Instruct-v0.1"),
+        ("Use local MLX model:", "xerus run \"Summarize text\" --model-type mlx-lm --model-id mlx-community/Mistral-7B-Instruct-v0.1-mlx"),
         ("With local tool:", "xerus run \"Generate image\" --tool-local ./my_tools.py"),
         ("With Hub tool:", "xerus run \"Analyze sentiment\" --tool-hub username/sentiment-tool"),
         ("With Space tool:", "xerus run \"Generate an image\" --tool-space stabilityai/stable-diffusion:image_generator:Generates images from text prompts"),
@@ -56,6 +57,7 @@ def print_project_info():
         ("Change output format:", "xerus run \"Tell me a joke\" --output-format json"),
         ("Save session:", "xerus run \"Explain relativity\" --save-session"),
         ("Named session:", "xerus chat --session-name physics"),
+        ("Custom API endpoint:", "xerus run \"Explain RLHF\" --model-type openai --api-base https://your-api-endpoint.com/v1"),
         ("List sessions:", "xerus sessions"),
         ("Load session:", "xerus load physics_20230615_123045")
     ]
@@ -91,16 +93,52 @@ def print_project_info():
         "Model identifier (e.g., Qwen/Qwen2.5-Coder-32B-Instruct, gpt-4, mistralai/Mistral-7B-Instruct-v0.1)"
     )
     options_table.add_row(
+        "--api-key", 
+        "API key for model service (alternatively use environment variables)"
+    )
+    options_table.add_row(
+        "--api-base", 
+        "Base URL for API (for OpenAI and similar APIs)"
+    )
+    options_table.add_row(
+        "--organization", 
+        "Organization ID (for OpenAI)"
+    )
+    options_table.add_row(
+        "--project", 
+        "Project ID (for some API providers)"
+    )
+    options_table.add_row(
+        "--client-kwargs", 
+        "JSON string of additional client arguments (for API clients)"
+    )
+    options_table.add_row(
+        "--custom-role-conversions", 
+        "JSON string of role conversion mappings (for OpenAI)"
+    )
+    options_table.add_row(
+        "--flatten-messages-as-text", 
+        "Whether to flatten messages as text (for OpenAI)"
+    )
+    options_table.add_row(
+        "--tool-name-key", 
+        "The key for retrieving a tool name (for transformers/MLX models)"
+    )
+    options_table.add_row(
+        "--tool-arguments-key", 
+        "The key for retrieving tool arguments (for transformers/MLX models)"
+    )
+    options_table.add_row(
+        "--trust-remote-code", 
+        "Whether to trust remote code for models (for transformers/MLX models)"
+    )
+    options_table.add_row(
         "--tools", 
         "Comma-separated tools list (currently supported: web_search)"
     )
     options_table.add_row(
         "--imports", 
         "Space-separated Python packages the agent can import (e.g., \"numpy matplotlib pandas\")"
-    )
-    options_table.add_row(
-        "--api-key", 
-        "API key for model service (alternatively use environment variables)"
     )
     options_table.add_row(
         "--tool-local", 
@@ -221,7 +259,9 @@ def print_auth_error(error_message, recovery_hint=None):
     hint = recovery_hint or (
         "To use Hugging Face models, you need to set your HF_TOKEN environment variable:\n"
         "  export HF_TOKEN=your_huggingface_token\n\n"
-        "You can get your token from: https://huggingface.co/settings/tokens"
+        "To use OpenAI models, set your OPENAI_API_KEY environment variable:\n"
+        "  export OPENAI_API_KEY=your_openai_api_key\n\n"
+        "You can also provide these directly with the --api-key argument."
     )
     
     console.print(Panel.fit(

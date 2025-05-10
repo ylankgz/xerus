@@ -98,6 +98,30 @@ def callback(
         None, 
         help="API key for the model service (can also use environment variables like OPENAI_API_KEY)"
     ),
+    api_base: Optional[str] = typer.Option(
+        None,
+        help="Base URL for API (for OpenAI and similar APIs)"
+    ),
+    organization: Optional[str] = typer.Option(
+        None, 
+        help="Organization ID (for OpenAI)"
+    ),
+    project: Optional[str] = typer.Option(
+        None,
+        help="Project ID (for some API providers)"
+    ),
+    tool_name_key: Optional[str] = typer.Option(
+        None,
+        help="The key for retrieving a tool name (for transformers/MLX models)"
+    ),
+    tool_arguments_key: Optional[str] = typer.Option(
+        None,
+        help="The key for retrieving tool arguments (for transformers/MLX models)"
+    ),
+    trust_remote_code: bool = typer.Option(
+        False,
+        help="Whether to trust remote code for models (for transformers/MLX models)"
+    ),
     tools: Optional[str] = typer.Option(
         None,
         help="Comma-separated list of tools to enable (e.g., 'web_search,path/to/tool.py,hub:user/tool')"
@@ -148,6 +172,42 @@ def run(
     api_key: Optional[str] = typer.Option(
         None, 
         help="API key for the model service (can also use environment variables like OPENAI_API_KEY)"
+    ),
+    api_base: Optional[str] = typer.Option(
+        None,
+        help="Base URL for API (for OpenAI and similar APIs)"
+    ),
+    organization: Optional[str] = typer.Option(
+        None, 
+        help="Organization ID (for OpenAI)"
+    ),
+    project: Optional[str] = typer.Option(
+        None,
+        help="Project ID (for some API providers)"
+    ),
+    client_kwargs: Optional[str] = typer.Option(
+        None,
+        help="JSON string of additional client arguments (for API clients)"
+    ),
+    custom_role_conversions: Optional[str] = typer.Option(
+        None,
+        help="JSON string of role conversion mappings (for OpenAI)"
+    ),
+    flatten_messages_as_text: bool = typer.Option(
+        False,
+        help="Whether to flatten messages as text (for OpenAI)"
+    ),
+    tool_name_key: Optional[str] = typer.Option(
+        None,
+        help="The key for retrieving a tool name (for transformers/MLX models)"
+    ),
+    tool_arguments_key: Optional[str] = typer.Option(
+        None,
+        help="The key for retrieving tool arguments (for transformers/MLX models)"
+    ),
+    trust_remote_code: bool = typer.Option(
+        False,
+        help="Whether to trust remote code for models (for transformers/MLX models)"
     ),
     tools: Optional[str] = typer.Option(
         None,
@@ -214,11 +274,22 @@ def run(
             tool_list = tools.split(",") if tools else []
             tool_directories = tool_dirs.split(",") if tool_dirs else None
             
+            # Parse JSON strings for client_kwargs and custom_role_conversions if provided
+            client_kwargs_dict = json.loads(client_kwargs) if client_kwargs else None
+            role_conversions_dict = json.loads(custom_role_conversions) if custom_role_conversions else None
+            
             # Create the agent with progress reporting
             base_agent = create_agent(
                 model_type, model_id, api_key, tool_list, imports, 
                 tool_local, tool_hub, tool_space, tool_collection,
-                tool_directories, progress_callback=progress_callback
+                tool_directories, progress_callback=progress_callback,
+                api_base=api_base, organization=organization, project=project,
+                client_kwargs=client_kwargs_dict,
+                custom_role_conversions=role_conversions_dict,
+                flatten_messages_as_text=flatten_messages_as_text,
+                tool_name_key=tool_name_key,
+                tool_arguments_key=tool_arguments_key,
+                trust_remote_code=trust_remote_code
             )
             
             # Create the enhanced agent
@@ -317,6 +388,42 @@ def chat(
         None, 
         help="API key for the model service (can also use environment variables like OPENAI_API_KEY)"
     ),
+    api_base: Optional[str] = typer.Option(
+        None,
+        help="Base URL for API (for OpenAI and similar APIs)"
+    ),
+    organization: Optional[str] = typer.Option(
+        None, 
+        help="Organization ID (for OpenAI)"
+    ),
+    project: Optional[str] = typer.Option(
+        None,
+        help="Project ID (for some API providers)"
+    ),
+    client_kwargs: Optional[str] = typer.Option(
+        None,
+        help="JSON string of additional client arguments (for API clients)"
+    ),
+    custom_role_conversions: Optional[str] = typer.Option(
+        None,
+        help="JSON string of role conversion mappings (for OpenAI)"
+    ),
+    flatten_messages_as_text: bool = typer.Option(
+        False,
+        help="Whether to flatten messages as text (for OpenAI)"
+    ),
+    tool_name_key: Optional[str] = typer.Option(
+        None,
+        help="The key for retrieving a tool name (for transformers/MLX models)"
+    ),
+    tool_arguments_key: Optional[str] = typer.Option(
+        None,
+        help="The key for retrieving tool arguments (for transformers/MLX models)"
+    ),
+    trust_remote_code: bool = typer.Option(
+        False,
+        help="Whether to trust remote code for models (for transformers/MLX models)"
+    ),
     tools: Optional[str] = typer.Option(
         None,
         help="Comma-separated list of tools to enable (e.g., 'web_search,path/to/tool.py,hub:user/tool')"
@@ -386,11 +493,22 @@ def chat(
             tool_list = tools.split(",") if tools else []
             tool_directories = tool_dirs.split(",") if tool_dirs else None
             
+            # Parse JSON strings for client_kwargs and custom_role_conversions if provided
+            client_kwargs_dict = json.loads(client_kwargs) if client_kwargs else None
+            role_conversions_dict = json.loads(custom_role_conversions) if custom_role_conversions else None
+            
             # Create the agent with progress reporting
             base_agent = create_agent(
                 model_type, model_id, api_key, tool_list, imports, 
                 tool_local, tool_hub, tool_space, tool_collection,
-                tool_directories, progress_callback=progress_callback
+                tool_directories, progress_callback=progress_callback,
+                api_base=api_base, organization=organization, project=project,
+                client_kwargs=client_kwargs_dict,
+                custom_role_conversions=role_conversions_dict,
+                flatten_messages_as_text=flatten_messages_as_text,
+                tool_name_key=tool_name_key,
+                tool_arguments_key=tool_arguments_key,
+                trust_remote_code=trust_remote_code
             )
             
             # Create enhanced agent
