@@ -149,7 +149,7 @@ def create_agent(
     
     additional_imports = []
     if imports:
-        additional_imports.extend(imports.split())
+        additional_imports.extend(imports.split(","))
     
     try:
         agent = CodeAgent(
