@@ -6,8 +6,14 @@ from smolagents import LiteLLMModel
 from ..errors import AuthenticationError
 
 
-def initialize_model(model_id, api_key=None, api_base=None, custom_role_conversions=None, 
-                    flatten_messages_as_text=None, **kwargs):
+def initialize_model(
+    model_id,
+    api_key,
+    api_base, 
+    custom_role_conversions, 
+    flatten_messages_as_text, 
+    **kwargs
+):
     """
     Initialize and return a LiteLLM model instance.
     

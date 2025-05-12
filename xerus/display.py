@@ -182,17 +182,9 @@ def print_project_info():
     console.print("  [green]xerus load[/green]        Load and display a saved session")
     console.print("  [green]xerus --help[/green]      Show help message")
 
-def print_prompt_panel(prompt):
-    """Print the prompt panel"""
-    console.print(Panel.fit(
-        f"[bold]Prompt:[/bold] {prompt}",
-        title="Xerus Agent",
-        border_style="blue"
-    ))
-
 def print_response_panel(response):
     """Print the agent response panel"""
-    console.print(Panel.fit(
+    console.print(Panel(
         Markdown(response),
         title="Agent Response",
         border_style="green"

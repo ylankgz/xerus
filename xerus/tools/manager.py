@@ -7,13 +7,12 @@ from typing import Dict, List, Optional, Union, Any
 
 from rich.console import Console
 from smolagents import (
-    Tool, WebSearchTool, ToolCollection, PythonInterpreterTool, 
+    Tool, WebSearchTool, PythonInterpreterTool, 
     FinalAnswerTool, UserInputTool, DuckDuckGoSearchTool, 
-    GoogleSearchTool, VisitWebpageTool
+    VisitWebpageTool
 )
 
-from ..errors import ToolLoadError, AuthenticationError
-from .base import ToolLoader
+from ..errors import ToolLoadError
 from .built_in import BuiltInToolLoader
 from .local import LocalFileToolLoader
 from .hub import HubToolLoader
@@ -49,10 +48,7 @@ class ToolManager:
         self.tools["final_answer"] = FinalAnswerTool()
         self.tools["user_input"] = UserInputTool()
         self.tools["duckduckgo_search"] = DuckDuckGoSearchTool()
-        self.tools["google_search"] = GoogleSearchTool()
         self.tools["visit_webpage"] = VisitWebpageTool()
-        
-        console.print("[green]Registered all default smolagents tools[/green]")
     
     def _init_loaders(self):
         """Initialize tool loaders for different tool types"""

@@ -12,15 +12,13 @@ setup(
     description="CLI agent built with Huggingface Smolagents",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/xerus",
+    url="https://github.com/ylankgz/xerus",
     packages=find_packages(),
     install_requires=[
-        "smolagents>=1.15.0",
+        "smolagents[litellm,toolkit]>=1.15.0",
         "typer>=0.15.3",
-        "rich>=10.0.0",
-        "huggingface_hub>=0.31.1",
-        "gradio-client>=1.10.0",
-        "python-dotenv>=1.1.0"
+        "rich>=14.0.0",
+        "python-dotenv>=1.1.0",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
