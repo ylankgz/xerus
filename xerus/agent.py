@@ -1,8 +1,7 @@
 """
 Agent module for Xerus package.
 """
-import importlib.util
-from typing import Optional, Callable
+from typing import Optional
 
 from rich.console import Console
 from smolagents import CodeAgent
@@ -11,25 +10,32 @@ from .models import get_model
 from .tools.manager import ToolManager
 from .errors import (
     ToolLoadError,
-    ToolExecutionError,
-    ModelInitializationError,
     AgentRuntimeError
 )
 
 console = Console()
 
-def create_agent(model_type, model_id, api_key=None, tools=None, imports=None, 
-               tool_local=None, tool_hub=None, tool_space=None, tool_collection=None,
-               tool_dirs=None, progress_callback: Optional[Callable[[str, float], None]] = None,
-               api_base=None, organization=None, project=None, client_kwargs=None,
-               custom_role_conversions=None, flatten_messages_as_text=False,
-               tool_name_key=None, tool_arguments_key=None, trust_remote_code=False,
-               **kwargs):
+def create_agent(
+    model_id,
+    api_key=None,
+    tools=None,
+    imports=None, 
+    tool_local=None,
+    tool_hub=None,
+    tool_space=None,
+    tool_collection=None,
+    tool_dirs=None,
+    api_base=None,
+    custom_role_conversions=None,
+    flatten_messages_as_text=False,
+    tool_name_key=None,
+    tool_arguments_key=None,
+    **kwargs
+):
     """
     Create a CodeAgent with specified model and tools.
     
     Args:
-        model_type: Type of model to use
         model_id: ID or name of the model
         api_key: API key for the model service
         tools: List of tool names or specifications to enable
@@ -39,17 +45,12 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None,
         tool_space: Hugging Face Space ID to import as a tool
         tool_collection: Hugging Face Hub repo ID for a collection of tools
         tool_dirs: List of directories to discover tools from
-        progress_callback: Optional callback function for progress updates
         api_base: The base URL of the API server (for OpenAI and similar APIs)
-        organization: The organization to use for the API request (for OpenAI)
-        project: The project to use for the API request
-        client_kwargs: Additional keyword arguments to pass to the client
         custom_role_conversions: Custom role conversion mapping (for OpenAI)
         flatten_messages_as_text: Whether to flatten messages as text (for OpenAI)
         tool_name_key: The key for retrieving a tool name (for transformers/MLX models)
         tool_arguments_key: The key for retrieving tool arguments (for transformers/MLX models)
-        trust_remote_code: Whether to trust remote code for models (for transformers/MLX models)
-        **kwargs: Additional model-specific arguments
+        **kwargs: Additional model-specific arguments that will be passed directly to the underlying model API
     
     Returns:
         The initialized CodeAgent
@@ -59,31 +60,18 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None,
         ToolLoadError: If a tool fails to load
         AgentRuntimeError: For other agent setup errors
     """
-    # Update progress if callback provided
-    def update_progress(message, progress=None):
-        if progress_callback:
-            progress_callback(message, progress if progress is not None else 0.0)
-        else:
-            console.print(f"[dim]{message}[/dim]")
     
-    update_progress("Initializing model...", 0.1)
     model = get_model(
-        model_type, 
         model_id, 
         api_key=api_key,
         api_base=api_base,
-        organization=organization,
-        project=project,
-        client_kwargs=client_kwargs,
         custom_role_conversions=custom_role_conversions,
         flatten_messages_as_text=flatten_messages_as_text,
         tool_name_key=tool_name_key,
         tool_arguments_key=tool_arguments_key,
-        trust_remote_code=trust_remote_code,
         **kwargs
     )
     
-    update_progress("Setting up tool manager...", 0.2)
     # Initialize the tool manager
     tool_manager = ToolManager()
     available_tools = []
@@ -94,7 +82,6 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None,
     
     # Process tool specifications
     if tools:
-        update_progress("Loading specified tools...", tool_progress)
         for tool_spec in tools:
             try:
                 loaded_tools = tool_manager.load_tool_from_spec(tool_spec)
@@ -103,12 +90,11 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None,
                 else:
                     available_tools.append(loaded_tools)
             except ToolLoadError as e:
-                console.print(f"[yellow]Warning: Failed to load tool '{tool_spec}': {e}[/yellow]")
+                console.print(f"[yellow]Warning: Failed to load tool '{tool_spec}': {e}[/yellow]\n")
         tool_progress += tool_progress_increment
     
     # Load tools from additional sources
     if tool_local:
-        update_progress("Loading local tool file...", tool_progress)
         try:
             local_tools = tool_manager.load_from_local_file(tool_local)
             available_tools.extend(local_tools)
@@ -117,7 +103,6 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None,
         tool_progress += tool_progress_increment
     
     if tool_hub:
-        update_progress("Loading tool from Hugging Face Hub...", tool_progress)
         try:
             hub_tool = tool_manager.load_from_hub(tool_hub)
             available_tools.append(hub_tool)
@@ -126,7 +111,6 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None,
         tool_progress += tool_progress_increment
     
     if tool_space:
-        update_progress("Loading tool from Hugging Face Space...", tool_progress)
         try:
             # Extract name and description if provided in format "space_id:name:description"
             parts = tool_space.split(":", 2)
@@ -141,7 +125,6 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None,
         tool_progress += tool_progress_increment
     
     if tool_collection:
-        update_progress("Loading tool collection...", tool_progress)
         try:
             collection_tools = tool_manager.load_from_collection(tool_collection)
             available_tools.extend(collection_tools)
@@ -151,16 +134,14 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None,
     
     # Discover tools from directories
     if tool_dirs:
-        update_progress("Discovering tools from directories...", tool_progress)
         for directory in tool_dirs:
             try:
                 discovered_tools = tool_manager.discover_tools(directory)
                 available_tools.extend(discovered_tools)
-                console.print(f"[green]Discovered {len(discovered_tools)} tools in {directory}[/green]")
+                console.print(f"[green]Discovered {len(discovered_tools)} tools in {directory}[/green]\n")
             except Exception as e:
-                console.print(f"[yellow]Warning: Error discovering tools in {directory}: {e}[/yellow]")
+                console.print(f"[yellow]Warning: Error discovering tools in {directory}: {e}[/yellow]\n")
     
-    update_progress("Finalizing tool setup...", 0.7)
     # Get unique tools based on name
     unique_tools = {}
     for tool in available_tools:
@@ -170,7 +151,6 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None,
     if imports:
         additional_imports.extend(imports.split())
     
-    update_progress("Creating agent instance...", 0.9)
     try:
         agent = CodeAgent(
             tools=list(unique_tools.values()),
@@ -178,7 +158,6 @@ def create_agent(model_type, model_id, api_key=None, tools=None, imports=None,
             additional_authorized_imports=additional_imports
         )
         
-        update_progress("Agent initialization complete", 1.0)
         return agent
     except Exception as e:
         raise AgentRuntimeError(
@@ -207,9 +186,12 @@ class EnhancedAgent:
         self.agent = code_agent
         self.history = []
     
-    def run(self, prompt: str, context: Optional[str] = None, 
-            include_history: bool = False, 
-            progress_callback: Optional[Callable[[str, float], None]] = None) -> str:
+    def run(
+        self,
+        prompt: str,
+        context: Optional[str] = None,
+        include_history: bool = False,
+    ) -> str:
         """
         Run the agent with the given prompt.
         
@@ -217,7 +199,6 @@ class EnhancedAgent:
             prompt: The user's prompt text
             context: Optional additional context for the prompt
             include_history: Whether to include conversation history
-            progress_callback: Optional callback for reporting progress
             
         Returns:
             The agent's response
@@ -239,14 +220,7 @@ class EnhancedAgent:
             ])
             complete_prompt = f"Previous conversation:\n{history_text}\n\nUser: {complete_prompt}"
         
-        # Report progress
-        def update_progress(message, progress=None):
-            if progress_callback:
-                progress_callback(message, progress if progress is not None else 0.0)
-        
-        try:
-            update_progress("Processing prompt...", 0.1)
-            
+        try:            
             # Execute the agent with the complete prompt
             response = self.agent.run(complete_prompt)
             
@@ -256,7 +230,6 @@ class EnhancedAgent:
                 "agent": response
             })
             
-            update_progress("Response complete", 1.0)
             return response
             
         except Exception as e:
