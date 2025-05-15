@@ -8,27 +8,26 @@ from rich.markdown import Markdown
 from rich.text import Text
 from rich.table import Table
 
-from . import __version__
+from .. import __version__
 
 console = Console()
 
 # ASCII art for Xerus
 XERUS_ASCII = """
-                    ,;      
-                   ;;;      
-           .=',    ;:;,     
-          /_', "=. ';:;     
-          @=:__,  \,;:;     
-            _(\.=  ;:;      
-           ""_(  _/"        
-             '"'''          
+                ,;       
+               ;;;       
+       .=',    ;:;,      
+      /_', "=. ';:;      
+      @=:__,  \,;:;      
+        _(\.=  ;:;       
+       ""_(  _/"         
+         '"'''          
 """
 
 def print_welcome():
     """Print the welcome message with ASCII art"""
     console.print(Panel.fit(
         Text(XERUS_ASCII),
-        title="Xerus - CLI Agent, powered by Huggingface Smolagents",
         border_style="blue"
     ))
 
@@ -38,28 +37,28 @@ def print_project_info():
     description = (
         "Xerus is a command-line interface for running AI agents powered by Huggingface's Smolagents. "
         "It lets you interact with powerful language models through a simple CLI, enabling you to "
-        "perform complex tasks, search the web, and execute code."
+        "perform complex tasks on your data, train and fine-tune ML models and build complex pipelines."
     )
     
     # Basic usage examples
     examples = [
-        ("Basic usage:", "xerus run \"What is the current weather in New York City?\""),
-        ("With web search:", "xerus run \"Find the latest news about AI\" --tools web_search"),
-        ("With specific imports:", "xerus run \"Create a plot of sin(x)\" --imports \"numpy matplotlib\""),
-        ("Use OpenAI model:", "xerus run \"Explain quantum computing\" --model-type openai --model-id gpt-4 --api-key YOUR_API_KEY"),
-        ("Use Mixtral model:", "xerus run \"Write a Python script\" --model-type inference --model-id mistralai/Mixtral-8x7B-Instruct-v0.1"),
-        ("Use local MLX model:", "xerus run \"Summarize text\" --model-type mlx-lm --model-id mlx-community/Mistral-7B-Instruct-v0.1-mlx"),
-        ("With local tool:", "xerus run \"Generate image\" --tool-local ./my_tools.py"),
-        ("With Hub tool:", "xerus run \"Analyze sentiment\" --tool-hub username/sentiment-tool"),
-        ("With Space tool:", "xerus run \"Generate an image\" --tool-space stabilityai/stable-diffusion:image_generator:Generates images from text prompts"),
-        ("With tool collection:", "xerus run \"Analyze data\" --tool-collection huggingface-tools/data-analysis"),
-        ("Interactive mode:", "xerus chat --tools web_search"),
-        ("Change output format:", "xerus run \"Tell me a joke\" --output-format json"),
-        ("Save session:", "xerus run \"Explain relativity\" --save-session"),
-        ("Named session:", "xerus chat --session-name physics"),
-        ("Custom API endpoint:", "xerus run \"Explain RLHF\" --model-type openai --api-base https://your-api-endpoint.com/v1"),
-        ("List sessions:", "xerus sessions"),
-        ("Load session:", "xerus load physics_20230615_123045")
+        ("Fine-tune a model:", "xerus run \"Fine-tune BERT on my text classification dataset\" --built-in-tools"),
+        ("Train with GPU:", "xerus run \"Train a CNN with GPU acceleration\" --model-id mistralai/Mixtral-8x7B-Instruct-v0.1 --local-tools ./ml_helpers.py"),
+        ("Hyperparameter tuning:", "xerus run \"Optimize hyperparameters for my XGBoost model\" --built-in-tools --api-base https://your-custom-endpoint.com/v1"),
+        ("Custom model evaluation:", "xerus run \"Evaluate my NLP model on test dataset\" --model-id gpt-4 --api-key YOUR_API_KEY"),
+        ("Build data pipeline:", "xerus run \"Create a data preprocessing pipeline for my images\" --model-id anthropic/claude-3-opus-20240229 --built-in-tools"),
+        ("ONNX conversion:", "xerus run \"Convert my PyTorch model to ONNX format\" --hub-tools username/onnx-converter"),
+        ("Dataset exploration:", "xerus run \"Analyze my tabular dataset\" --collection-tools huggingface-tools/data-analysis"),
+        ("Multi-agent ML chat:", "xerus chat --model-id anthropic/claude-3-sonnet-20240229 --built-in-tools --session-name ml_experiment"),
+        ("Interactive debugging:", "xerus chat --local-tools ./debug_tools.py --hub-tools username/model-analyzer"),
+        ("GPU training chat:", "xerus chat --model-id openai/gpt-4 --space-tools stability-ai/sdxl:image_gen:Generate images from text"),
+        ("Save experiment:", "xerus chat --built-in-tools --model-id mistralai/Mistral-7B-Instruct-v0.1 --session-name training_run_1"),
+        ("Collaborative ML session:", "xerus chat --model-id openai/gpt-4 --built-in-tools --collection-tools username/collaborative-ml"),
+        ("Expert mode debugging:", "xerus chat --model-id anthropic/claude-3-opus-20240229 --flatten-messages-as-text --no-history"),
+        ("Resume training:", "xerus chat --model-id openai/gpt-4-turbo --built-in-tools --session-name continue_training"),
+        ("Deploy trained model:", "xerus run \"Package and deploy my trained model to production\" --built-in-tools --hub-tools username/model-deployment"),
+        ("Load experiment:", "xerus load ml_experiment_20230615_123045"),
+        ("List all sessions:", "xerus sessions")
     ]
     
     # Create the display panel
@@ -85,12 +84,8 @@ def print_project_info():
     options_table.add_column("Option", style="bold green")
     options_table.add_column("Description")
     options_table.add_row(
-        "--model-type", 
-        "Model provider: inference (HF), openai, azure-openai, amazon-bedrock, litellm, transformers, mlx-lm"
-    )
-    options_table.add_row(
         "--model-id", 
-        "Model identifier (e.g., Qwen/Qwen2.5-Coder-32B-Instruct, gpt-4, mistralai/Mistral-7B-Instruct-v0.1)"
+        "Model identifier (e.g., anthropic/claude-3-sonnet-20240229, openai/gpt-4o, xai/grok-2-latest)"
     )
     options_table.add_row(
         "--api-key", 
@@ -101,76 +96,44 @@ def print_project_info():
         "Base URL for API (for OpenAI and similar APIs)"
     )
     options_table.add_row(
-        "--organization", 
-        "Organization ID (for OpenAI)"
-    )
-    options_table.add_row(
-        "--project", 
-        "Project ID (for some API providers)"
-    )
-    options_table.add_row(
-        "--client-kwargs", 
-        "JSON string of additional client arguments (for API clients)"
-    )
-    options_table.add_row(
         "--custom-role-conversions", 
-        "JSON string of role conversion mappings (for OpenAI)"
+        "Path to JSON file with role conversion mappings (for OpenAI)"
     )
     options_table.add_row(
         "--flatten-messages-as-text", 
         "Whether to flatten messages as text (for OpenAI)"
     )
     options_table.add_row(
-        "--tool-name-key", 
-        "The key for retrieving a tool name (for transformers/MLX models)"
+        "--built-in-tools", 
+        "Use built-in tools (web_search, python_interpreter, final_answer, user_input, etc.)"
     )
     options_table.add_row(
-        "--tool-arguments-key", 
-        "The key for retrieving tool arguments (for transformers/MLX models)"
-    )
-    options_table.add_row(
-        "--trust-remote-code", 
-        "Whether to trust remote code for models (for transformers/MLX models)"
-    )
-    options_table.add_row(
-        "--tools", 
-        "Comma-separated tools list (currently supported: web_search, python_interpreter, final_answer, user_input, duckduckgo_search, google_search, visit_webpage)"
-    )
-    options_table.add_row(
-        "--imports", 
-        "Space-separated Python packages the agent can import (e.g., \"numpy matplotlib pandas\")"
-    )
-    options_table.add_row(
-        "--tool-local", 
+        "--local-tools", 
         "Path to a local Python file containing tool definitions"
     )
     options_table.add_row(
-        "--tool-hub", 
+        "--hub-tools", 
         "Hugging Face Hub repo ID for a tool (e.g., username/tool-name)"
     )
     options_table.add_row(
-        "--tool-space", 
+        "--space-tools", 
         "Hugging Face Space ID to import as a tool (format: space_id:name:description)"
     )
     options_table.add_row(
-        "--tool-collection", 
+        "--collection-tools", 
         "Hugging Face Hub repo ID for a collection of tools"
-    )
-    options_table.add_row(
-        "--output-format", 
-        "Output format (rich, plain, json, markdown)"
     )
     options_table.add_row(
         "--session-name", 
         "Name for the current session (used in saved session files)"
     )
     options_table.add_row(
-        "--save-session", 
-        "Save the current session to a file for later reference"
-    )
-    options_table.add_row(
         "--no-history", 
         "Don't load or save conversation history in chat mode"
+    )
+    options_table.add_row(
+        "--prompt", 
+        "Input prompt for the AI model (required for run command)"
     )
     console.print(options_table)
     

@@ -6,18 +6,17 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="xerus",
-    version="0.1.0",
-    author="Author Name",
-    author_email="author@example.com",
-    description="CLI agent built with Huggingface Smolagents",
+    version="0.0.2",
+    author="Ulan Abdurazakov",
+    author_email="ylankgz@gmail.com",
+    description="CLI agent for training and finetuning ML models, built with Huggingface Smolagents",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/ylankgz/xerus",
     packages=find_packages(),
     install_requires=[
         "smolagents[litellm,toolkit]>=1.15.0",
-        "typer>=0.15.3",
-        "rich>=14.0.0",
+        "rich-click>=1.8.8",
         "python-dotenv>=1.1.0",
     ],
     classifiers=[
@@ -27,7 +26,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "xerus=xerus.cli:cli",
+            "xerus=xerus.cli:main",
         ],
     },
     python_requires=">=3.10",

@@ -1,170 +1,67 @@
 """
 Agent module for Xerus package.
 """
-from typing import Optional
+import os
+from typing import Optional, List
 
 from rich.console import Console
-from smolagents import CodeAgent
+from smolagents import CodeAgent, Tool
 
-from .models import get_model
-from .tools.manager import ToolManager
+from .model import ModelFactory
 from .errors import (
-    ToolLoadError,
     AgentRuntimeError
 )
 
 console = Console()
 
-def create_agent(
+def create_tool_agent(
     model_id,
-    api_key=None,
-    tools=None,
-    imports=None, 
-    tool_local=None,
-    tool_hub=None,
-    tool_space=None,
-    tool_collection=None,
-    tool_dirs=None,
-    api_base=None,
-    custom_role_conversions=None,
-    flatten_messages_as_text=False,
-    tool_name_key=None,
-    tool_arguments_key=None,
+    api_key,
+    api_base,
+    tools: List[Tool],
     **kwargs
-):
+)-> CodeAgent:
     """
-    Create a CodeAgent with specified model and tools.
+    Create a tool agent with specified model and tool.
     
     Args:
         model_id: ID or name of the model
         api_key: API key for the model service
-        tools: List of tool names or specifications to enable
-        imports: List of Python packages to authorize for import
-        tool_local: Path to a local tool file
-        tool_hub: Hugging Face Hub repo ID for a tool
-        tool_space: Hugging Face Space ID to import as a tool
-        tool_collection: Hugging Face Hub repo ID for a collection of tools
-        tool_dirs: List of directories to discover tools from
+        tool: Tool instance
         api_base: The base URL of the API server (for OpenAI and similar APIs)
-        custom_role_conversions: Custom role conversion mapping (for OpenAI)
-        flatten_messages_as_text: Whether to flatten messages as text (for OpenAI)
-        tool_name_key: The key for retrieving a tool name (for transformers/MLX models)
-        tool_arguments_key: The key for retrieving tool arguments (for transformers/MLX models)
-        **kwargs: Additional model-specific arguments that will be passed directly to the underlying model API
     
     Returns:
         The initialized CodeAgent
-        
+
     Raises:
-        ModelInitializationError: If model initialization fails
-        ToolLoadError: If a tool fails to load
         AgentRuntimeError: For other agent setup errors
     """
-    
-    model = get_model(
-        model_id, 
-        api_key=api_key,
+
+    tool_model = ModelFactory.create_client(
+        model_id=model_id or "openai/o4-mini",
+        api_key=api_key or os.environ.get("LITELLM_API_KEY"),
         api_base=api_base,
-        custom_role_conversions=custom_role_conversions,
-        flatten_messages_as_text=flatten_messages_as_text,
-        tool_name_key=tool_name_key,
-        tool_arguments_key=tool_arguments_key,
+        custom_role_conversions=None,
+        flatten_messages_as_text=None,
         **kwargs
     )
-    
-    # Initialize the tool manager
-    tool_manager = ToolManager()
-    available_tools = []
-    
-    tool_count = sum(1 for x in [tools, tool_local, tool_hub, tool_space, tool_collection, tool_dirs] if x)
-    tool_progress = 0.3
-    tool_progress_increment = 0.4 / max(1, tool_count) if tool_count > 0 else 0
-    
-    # Process tool specifications
-    if tools:
-        for tool_spec in tools:
-            try:
-                loaded_tools = tool_manager.load_tool_from_spec(tool_spec)
-                if isinstance(loaded_tools, list):
-                    available_tools.extend(loaded_tools)
-                else:
-                    available_tools.append(loaded_tools)
-            except ToolLoadError as e:
-                console.print(f"[yellow]Warning: Failed to load tool '{tool_spec}': {e}[/yellow]\n")
-        tool_progress += tool_progress_increment
-    
-    # Load tools from additional sources
-    if tool_local:
-        try:
-            local_tools = tool_manager.load_from_local_file(tool_local)
-            available_tools.extend(local_tools)
-        except ToolLoadError as e:
-            raise ToolLoadError(str(e))
-        tool_progress += tool_progress_increment
-    
-    if tool_hub:
-        try:
-            hub_tool = tool_manager.load_from_hub(tool_hub)
-            available_tools.append(hub_tool)
-        except ToolLoadError as e:
-            raise ToolLoadError(str(e))
-        tool_progress += tool_progress_increment
-    
-    if tool_space:
-        try:
-            # Extract name and description if provided in format "space_id:name:description"
-            parts = tool_space.split(":", 2)
-            space_id = parts[0]
-            name = parts[1] if len(parts) > 1 else None
-            description = parts[2] if len(parts) > 2 else None
-            
-            space_tool = tool_manager.load_from_space(space_id, name, description)
-            available_tools.append(space_tool)
-        except ToolLoadError as e:
-            raise ToolLoadError(str(e))
-        tool_progress += tool_progress_increment
-    
-    if tool_collection:
-        try:
-            collection_tools = tool_manager.load_from_collection(tool_collection)
-            available_tools.extend(collection_tools)
-        except ToolLoadError as e:
-            raise ToolLoadError(str(e))
-        tool_progress += tool_progress_increment
-    
-    # Discover tools from directories
-    if tool_dirs:
-        for directory in tool_dirs:
-            try:
-                discovered_tools = tool_manager.discover_tools(directory)
-                available_tools.extend(discovered_tools)
-                console.print(f"[green]Discovered {len(discovered_tools)} tools in {directory}[/green]\n")
-            except Exception as e:
-                console.print(f"[yellow]Warning: Error discovering tools in {directory}: {e}[/yellow]\n")
-    
-    # Get unique tools based on name
-    unique_tools = {}
-    for tool in available_tools:
-        unique_tools[tool.name] = tool
-    
-    additional_imports = []
-    if imports:
-        additional_imports.extend(imports.split(","))
-    
+
+    # Initialize the tool agent
     try:
         agent = CodeAgent(
-            tools=list(unique_tools.values()),
-            model=model, 
-            additional_authorized_imports=additional_imports
+            tools=tools,
+            model=tool_model,
+            name=tools[0].name+"_agent",
+            description=tools[0].description,
+            **kwargs
         )
-        
         return agent
     except Exception as e:
         raise AgentRuntimeError(
-            f"Failed to initialize agent: {e}",
-            "Check model configuration and tool compatibility"
-        ) 
-
+            f"Failed to initialize tool agent: {e}",
+            "Check model configuration and tool compatibility for tool: {tool}"
+        )
+    
 class EnhancedAgent:
     """
     Enhanced agent with additional features beyond the base CodeAgent.

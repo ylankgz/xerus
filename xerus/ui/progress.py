@@ -5,7 +5,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeEl
 from rich.console import Console
 from typing import Callable, Optional
 
-from ..display import console
+from .display import console
 
 def create_initialization_progress() -> Progress:
     """Create a progress instance for agent initialization."""
