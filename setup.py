@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="xerus-cli",
+    name="xerus-ai",
     version="0.0.2",
     author="Ulan Abdurazakov",
     author_email="ylankgz@gmail.com",
