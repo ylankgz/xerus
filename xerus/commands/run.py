@@ -79,7 +79,7 @@ def run(
         client = ModelFactory.create_client(
             model_id=model_id or "openai/o4-mini",
             api_key=api_key or os.environ.get("LITELLM_API_KEY"),
-            api_base=api_base or "https://api.openai.com/v1",
+            api_base=api_base,
             custom_role_conversions=role_conversions_dict,
             flatten_messages_as_text=flatten_messages_as_text,
             **parse_kwargs(kwargs)
@@ -95,7 +95,9 @@ def run(
                 *space_tools_agents_list,
                 *collection_tools_agents_list,
                 *hub_tools_agents_list
-            ]
+            ],
+            name="xerus_manager_agent",
+            description="Analyzes, trains, fine-tunes and runs ML models"
         )
 
         # Create the enhanced agent
