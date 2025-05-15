@@ -4,7 +4,7 @@ Session management utilities for Xerus CLI.
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 def get_history_file_path() -> Path:
     """Get the path to the conversation history file."""
@@ -34,7 +34,7 @@ def load_conversation_history() -> List[Dict[str, Any]]:
             with open(history_file, "r") as f:
                 return json.load(f)
         except json.JSONDecodeError:
-            from ..display import console
+            from .ui.display import console
             console.print("[yellow]Warning: Could not parse history file. Starting with empty history.[/yellow]")
     return []
 
@@ -60,4 +60,4 @@ def save_session(session_file: Path, history: List[Dict[str, Any]], metadata: Di
 def load_session(session_file: Path) -> Dict[str, Any]:
     """Load a session from a file."""
     with open(session_file, "r") as f:
-        return json.load(f) 
+        return json.load(f)
