@@ -19,6 +19,7 @@ def create_tool_agent(
     api_key,
     api_base,
     tools: List[Tool],
+    name_suffix: str = "",
     **kwargs
 )-> CodeAgent:
     """
@@ -29,6 +30,7 @@ def create_tool_agent(
         api_key: API key for the model service
         tool: Tool instance
         api_base: The base URL of the API server (for OpenAI and similar APIs)
+        name_suffix: Optional suffix to add to the agent name for uniqueness
     
     Returns:
         The initialized CodeAgent
@@ -48,10 +50,11 @@ def create_tool_agent(
 
     # Initialize the tool agent
     try:
+        agent_name = f"{tools[0].name}_agent{name_suffix}"
         agent = CodeAgent(
             tools=tools,
             model=tool_model,
-            name=tools[0].name+"_agent",
+            name=agent_name,
             description=tools[0].description,
             **kwargs
         )
