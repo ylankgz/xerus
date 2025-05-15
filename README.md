@@ -51,6 +51,120 @@ Customize model behavior with extra parameters:
 xerus run --prompt "Write me a creative story" temperature=0.9 top_p=0.95
 ```
 
+## Linux and ML Use Cases
+
+### Linux System Administration
+
+Monitor system resources:
+
+```bash
+xerus run --prompt "Check my system's CPU and memory usage, then provide recommendations to optimize performance" --built-in-tools
+```
+
+Analyze and summarize log files:
+
+```bash
+xerus run --prompt "Analyze the last 100 lines of my nginx error logs at /var/log/nginx/error.log and summarize the most common issues" --built-in-tools
+```
+
+Automate file organization:
+
+```bash
+xerus run --prompt "Find all log files in /var/log that are older than 30 days and suggest a command to compress them" --built-in-tools
+```
+
+Generate shell scripts:
+
+```bash
+xerus run --prompt "Create a bash script that backs up my /home/user/projects directory to an external drive, with incremental backups and error logging" --built-in-tools
+```
+
+### CUDA and GPU Management
+
+Check CUDA configuration:
+
+```bash
+xerus run --prompt "Detect CUDA version, installed GPUs, and verify the correct drivers are installed on my system" --built-in-tools
+```
+
+Optimize GPU workloads:
+
+```bash
+xerus run --prompt "Monitor my GPU utilization while running TensorFlow and suggest ways to improve performance" --built-in-tools
+```
+
+Debug CUDA issues:
+
+```bash
+xerus run --prompt "Help me troubleshoot why my PyTorch model is not using my NVIDIA GPU" --built-in-tools
+```
+
+### Working with Hugging Face
+
+Download and use models:
+
+```bash
+xerus run --prompt "Download the BERT base model from Hugging Face and show me how to use it for sentiment analysis on my customer feedback data" --built-in-tools
+```
+
+Fine-tune models:
+
+```bash
+xerus run --prompt "Create a script to fine-tune the Llama-3-8B model on my custom dataset located at ~/data/training_set.json" --built-in-tools
+```
+
+Deploy models:
+
+```bash
+xerus run --prompt "Help me deploy my fine-tuned text classification model to Hugging Face Spaces" --built-in-tools
+```
+
+### ML Pipelines
+
+Create data processing pipelines:
+
+```bash
+xerus run --prompt "Generate a Python script that creates a preprocessing pipeline for my image dataset at ~/datasets/images/ including resizing, augmentation, and normalization" --built-in-tools
+```
+
+Set up experiment tracking:
+
+```bash
+xerus run --prompt "Set up MLflow for tracking experiments on my current machine learning project" --built-in-tools
+```
+
+Automate model evaluation:
+
+```bash
+xerus run --prompt "Create a script to evaluate my trained model against a test dataset and generate precision-recall curves and confusion matrices" --built-in-tools
+```
+
+Distributed training:
+
+```bash
+xerus run --prompt "Help me set up distributed PyTorch training across multiple GPUs on my Linux server" --built-in-tools
+```
+
+### Log Analysis
+
+Parse and analyze logs:
+
+```bash
+xerus run --prompt "Extract all ERROR level logs from my application.log file and categorize them by frequency and type" --built-in-tools
+```
+
+Create monitoring dashboards:
+
+```bash
+xerus run --prompt "Generate a Python script using Plotly to visualize system performance metrics from my collected logs" --built-in-tools
+```
+
+Set up log rotation:
+
+```bash
+xerus run --prompt "Configure logrotate for my application logs to retain 7 days of logs with daily rotation" --built-in-tools
+```
+
 ## Features
 
 - Run AI agents from your terminal with simple commands
