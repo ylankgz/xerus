@@ -6,7 +6,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="xerus-ai",
-    version="0.0.3",
+    version="0.0.4",
     author="Ulan Abdurazakov",
     author_email="ylankgz@gmail.com",
     description="CLI agent for training and finetuning ML models, built with Huggingface Smolagents",
