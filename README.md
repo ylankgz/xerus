@@ -5,7 +5,7 @@ A command-line interface for running AI agents powered by Huggingface's Smolagen
 ## Installation
 
 ```bash
-pip install xerus
+pip install xerus-cli
 ```
 
 ## Quick Start
