@@ -13,21 +13,24 @@ from .ui.display import console
 
 def setup_built_in_tools(model_id: str, api_key: str, api_base: str):
     """Setup and return built-in tools as agent list."""
+    tools = [
+        WebSearchTool(),
+        PythonInterpreterTool(authorized_imports=["*"]),
+        FinalAnswerTool(),
+        UserInputTool(),
+        DuckDuckGoSearchTool(),
+        VisitWebpageTool()
+    ]
+    
     return [
         create_tool_agent(
             model_id,
             api_key,
             api_base,
             [tool],
+            name_suffix=f"_builtin_{i}"
         )
-        for tool in [
-            WebSearchTool(),
-            PythonInterpreterTool(authorized_imports=["*"]),
-            FinalAnswerTool(),
-            UserInputTool(),
-            DuckDuckGoSearchTool(),
-            VisitWebpageTool()
-        ]
+        for i, tool in enumerate(tools)
     ]
 
 def setup_local_tools(local_tools_path: Optional[str], model_id: str, api_key: str, api_base: str):
@@ -36,7 +39,8 @@ def setup_local_tools(local_tools_path: Optional[str], model_id: str, api_key: s
     
     if not local_tools_path:
         return local_tools_agents_list
-        
+    
+    tool_index = 0
     for tool_spec in local_tools_path.split(","):
         if os.path.exists(tool_spec) and tool_spec.endswith(".py"):
             spec_obj = importlib.util.spec_from_file_location("local_tool", tool_spec)
@@ -52,7 +56,9 @@ def setup_local_tools(local_tools_path: Optional[str], model_id: str, api_key: s
                         api_key,
                         api_base,
                         [obj],
+                        name_suffix=f"_local_{tool_index}"
                     ))
+                    tool_index += 1
                     
     return local_tools_agents_list
 
@@ -76,7 +82,7 @@ def setup_huggingface_tools(
         
     # Setup space tools
     if space_tools:
-        for tool_spec in space_tools.split(","):
+        for i, tool_spec in enumerate(space_tools.split(",")):
             parts = tool_spec.split(":")
             space_id = parts[0]
             name = parts[1]
@@ -86,28 +92,31 @@ def setup_huggingface_tools(
                 api_key,
                 api_base,
                 Tool.from_space(space_id, name=name, description=description, token=token),
+                name_suffix=f"_space_{i}"
             ))
     
     # Setup collection tools
     if collection_tools:
-        for tool_spec in collection_tools.split(","):
+        for i, tool_spec in enumerate(collection_tools.split(",")):
             tool_collection = ToolCollection.from_hub(tool_spec, token=token)
             collection_tools_agents_list.append(create_tool_agent(
                 model_id,
                 api_key,
                 api_base,
                 [*tool_collection.tools],
+                name_suffix=f"_collection_{i}"
             ))
 
     # Setup hub tools
     if hub_tools:
-        for tool_spec in hub_tools.split(","):
+        for i, tool_spec in enumerate(hub_tools.split(",")):
             hub_tool = load_tool(tool_spec, token=token, trust_remote_code=True)
             hub_tools_agents_list.append(create_tool_agent(
                 model_id,
                 api_key,
                 api_base,
                 [hub_tool],
+                name_suffix=f"_hub_{i}"
             ))
             
     return space_tools_agents_list, collection_tools_agents_list, hub_tools_agents_list 
