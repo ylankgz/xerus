@@ -16,7 +16,7 @@ from ..tools import setup_local_tools, setup_huggingface_tools, setup_built_in_t
 from ..ui.display import console
 from ..ui.progress import create_initialization_progress
 from ..utils import parse_kwargs
-from smolagents import CodeAgent
+from smolagents import CodeAgent, LogLevel
 
 @click.command()
 @click.option("--model-id", help="[bold]Model identifier[/bold] (e.g. gpt-4, claude-2)")
@@ -79,7 +79,7 @@ def chat(
         role_conversions_dict = json.loads(custom_role_conversions) if custom_role_conversions else None
     
         client = ModelFactory.create_client(
-            model_id=model_id or "openai/o4-mini",
+            model_id=model_id or "openai/deepseek-ai/DeepSeek-R1",
             api_key=api_key or os.environ.get("LITELLM_API_KEY"),
             api_base=api_base,
             custom_role_conversions=role_conversions_dict,
@@ -98,6 +98,9 @@ def chat(
                 *collection_tools_agents_list,
                 *hub_tools_agents_list
             ],
+            additional_authorized_imports=["*"],
+            max_steps=10,
+            verbosity_level=LogLevel.ERROR,
             name="xerus_manager_agent",
             description="Analyzes, trains, fine-tunes and runs ML models"
         )
