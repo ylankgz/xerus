@@ -2,6 +2,22 @@
 # This file configures all built-in tools with their default settings
 # You can modify these values to customize tool behavior
 
+# Manager Agent Configuration
+[manager_agent]
+name = "xerus_manager_agent"
+description = "Analyzes, trains, fine-tunes and runs ML models"
+model_id = "openai/deepseek-ai/DeepSeek-R1-0528"
+api_key = "${GMI_CLOUD_API_KEY}"
+api_base = "https://api.gmi-serving.com/v1"
+
+# Manager agent parameters
+[manager_agent.parameters]
+max_steps = 10
+verbosity_level = 2
+additional_authorized_imports = ["visit_webpage"]
+stream_outputs = true
+use_structured_outputs_internally = true
+
 [tools.web_search_agent]
 name = "web_search_agent"
 description = "Searches the web for information"

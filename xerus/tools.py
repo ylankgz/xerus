@@ -4,10 +4,9 @@ import toml
 import pkg_resources
 from typing import List, Optional, Dict, Any
 
-from smolagents import Tool, ToolCollection, load_tool
+from smolagents import Tool, ToolCollection, load_tool, CodeAgent, LogLevel
 
 from .ui.display import console
-from .agent import CodeAgent
 from .model import ModelFactory
 from .errors import AgentRuntimeError
 
@@ -51,7 +50,8 @@ def create_tool_agent(
             model=tool_model,
             name=name,
             description=description,
-            provide_run_summary=True,
+            stream_outputs=True,
+            use_structured_outputs_internally=True,
             **kwargs
         )
         return agent
@@ -97,7 +97,7 @@ def load_config() -> Dict[str, Any]:
             # Expand environment variables in the config
             for tool_name, tool_config in config.get('tools', {}).items():
                 for key, value in tool_config.items():
-                    if isinstance(value, str) and value.startswith('${') and value.endswith('}'):
+                    if isinstance(value, str) and value and value.startswith('${') and value.endswith('}'):
                         env_var = value[2:-1]  # Remove ${ and }
                         tool_config[key] = os.environ.get(env_var, value)
             return config
@@ -159,10 +159,10 @@ def setup_built_in_tools():
         tools.append({
             "tool": tool_instance,
             "name": tool_config.get("name", tool_name),
-            "description": tool_config.get("description"),
-            "model_id": tool_config.get("model_id"),
-            "api_key": tool_config.get("api_key"),
-            "api_base": tool_config.get("api_base")
+            "description": tool_config.get("description", ""),
+            "model_id": tool_config.get("model_id", ""),
+            "api_key": tool_config.get("api_key", ""),
+            "api_base": tool_config.get("api_base", "")
         })
 
     built_in_tools_agents_list = []
@@ -181,6 +181,61 @@ def setup_built_in_tools():
 
     return built_in_tools_agents_list
 
+def setup_manager_agent():
+    """Setup and return manager agent from config."""
+    config = load_config()
+    
+    # Get manager agent config
+    manager_config = config.get('manager_agent', {})
+    
+    if not manager_config:
+        console.print("[red]Error: No manager_agent configuration found in config file[/red]")
+        console.print("[yellow]Please ensure ~/.xerus/config.toml contains a [manager_agent] section[/yellow]")
+        raise ValueError("Manager agent configuration missing")
+    
+    # Get manager agent parameters
+    manager_params = manager_config.get("parameters", {})
+    
+    # Get built-in tools
+    built_in_tools_agents_list = setup_built_in_tools()
+    
+    # Create the model client
+    try:
+        client = ModelFactory.create_client(
+            model_id=manager_config.get("model_id"),
+            api_key=manager_config.get("api_key"),
+            api_base=manager_config.get("api_base")
+        )
+    except Exception as e:
+        console.print(f"[red]Error creating manager agent model client: {e}[/red]")
+        raise
+    
+    # Convert verbosity_level to LogLevel if it's an integer
+    verbosity_level = manager_params.get("verbosity_level", 2)
+    if isinstance(verbosity_level, int):
+        verbosity_level = LogLevel(verbosity_level)
+    
+    # Create manager agent
+    try:
+        manager_agent = CodeAgent(
+            tools=[],
+            model=client,
+            managed_agents=built_in_tools_agents_list,
+            additional_authorized_imports=manager_params.get("additional_authorized_imports", []),
+            max_steps=manager_params.get("max_steps", 10),
+            verbosity_level=verbosity_level,
+            name=manager_config.get("name"),
+            description=manager_config.get("description"),
+            stream_outputs=manager_params.get("stream_outputs", True),
+            use_structured_outputs_internally=manager_params.get("use_structured_outputs_internally", True)
+        )
+        
+        console.print(f"[green]Manager agent '{manager_config.get('name', 'unnamed')}' created successfully[/green]")
+        return manager_agent
+        
+    except Exception as e:
+        console.print(f"[red]Error creating manager agent: {e}[/red]")
+        raise
 
 def setup_local_tools(local_tools_path: Optional[str], model_id: str, api_key: str, api_base: str):
     """Setup and return local tools as agent list."""
@@ -191,7 +246,8 @@ def setup_local_tools(local_tools_path: Optional[str], model_id: str, api_key: s
     
     tool_index = 0
     for tool_spec in local_tools_path.split(","):
-        if os.path.exists(tool_spec) and tool_spec.endswith(".py"):
+        tool_spec = tool_spec.strip()  # Remove whitespace
+        if tool_spec and os.path.exists(tool_spec) and tool_spec.endswith(".py"):
             spec_obj = importlib.util.spec_from_file_location("local_tool", tool_spec)
             if not spec_obj:
                 continue

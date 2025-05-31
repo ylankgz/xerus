@@ -5,36 +5,27 @@ import rich_click as click
 
 from ..agent import EnhancedAgent
 from ..error_handler import handle_command_errors
-from ..model import ModelFactory
 from ..sessions import (
     create_session_file,
     save_session
 )
-from ..tools import setup_built_in_tools
+from ..tools import setup_manager_agent
 from ..ui.display import console
 from ..ui.progress import create_initialization_progress
-from ..utils import parse_kwargs
-from smolagents import CodeAgent, LogLevel
 
 @click.command()
-@click.option("--model-id", help="[bold]Model identifier[/bold] (e.g. gpt-4, claude-2)")
-@click.option("--api-key", help="[bold]API key[/bold] for the service")
-@click.option("--api-base", help="[italic]Custom[/italic] API base URL")
 @click.option("--session-name", help="Name for this session (used in saved session file)")
-@click.argument("kwargs", nargs=-1, type=click.UNPROCESSED)
 @handle_command_errors
 def chat(
-    model_id,
-    api_key,
-    api_base,
     session_name: Optional[str],
-    kwargs,
 ):
-    """[bold]Interactive chat with AI model[/bold] with given parameters.
+    """[bold]Interactive chat with AI model[/bold] configured via config file.
+
+    The manager agent and all tools are configured via ~/.xerus/config.toml
 
     Examples:\n
-    [green]xerus chat --model-id gpt-4 --api-key sk-123[/green]\n
-    [green]xerus chat --session-name "My session" --help[/green] to see all available options \n
+    [green]xerus chat[/green]\n
+    [green]xerus chat --session-name "My session"[/green]\n
     """
     # Create a progress instance for initialization
     progress = create_initialization_progress()
@@ -45,29 +36,8 @@ def chat(
         # Add a task for agent initialization
         agent_task = progress.add_task("[bold green]Initializing agent...", total=100)
 
-        # Setup built-in tools
-        built_in_tools_agents_list = setup_built_in_tools()
-
-        client = ModelFactory.create_client(
-            model_id=model_id or "openai/deepseek-ai/DeepSeek-R1-0528",
-            api_key=api_key or os.environ.get("GMI_CLOUD_API_KEY"),
-            api_base=api_base or "https://api.gmi-serving.com/v1",
-            **parse_kwargs(kwargs)
-        )
-
-        # Create manager agent
-        manager_agent = CodeAgent(
-            tools=[],
-            model=client,
-            managed_agents=[
-                *built_in_tools_agents_list,
-            ],
-            # additional_authorized_imports=["*"],
-            max_steps=10,
-            verbosity_level=2,
-            name="xerus_manager_agent",
-            description="Analyzes, trains, fine-tunes and runs ML models"
-        )
+        # Setup manager agent from config
+        manager_agent = setup_manager_agent()
 
         # Create the enhanced agent
         agent = EnhancedAgent(manager_agent)
@@ -96,9 +66,7 @@ def chat(
                 console.print("[bold blue]Exiting chat session[/bold blue]")
                 # Save session on exit if a name was provided
                 if session_name and session_file and session_history:
-                    save_session(session_file, session_history, {
-                        "model_id": model_id,
-                    })
+                    save_session(session_file, session_history, {})
                     console.print(f"[green]Session saved to {session_file}[/green]")
                 break
             
@@ -109,9 +77,7 @@ def chat(
                     continue
                 
                 save_file = session_file or create_session_file(session_name)
-                save_session(save_file, session_history, {
-                    "model_id": model_id,
-                })
+                save_session(save_file, session_history, {})
                 console.print(f"[green]Session saved to {save_file}[/green]")
                 continue
             

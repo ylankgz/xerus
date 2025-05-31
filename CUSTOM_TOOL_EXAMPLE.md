@@ -2,6 +2,28 @@
 
 This example shows how the universal parameter system works in Xerus, allowing you to add any tool with any parameters without modifying any core code.
 
+## Manager Agent Configuration
+
+The manager agent is now also configurable via `~/.xerus/config.toml`:
+
+```toml
+# Manager Agent Configuration
+[manager_agent]
+name = "xerus_manager_agent"
+description = "Analyzes, trains, fine-tunes and runs ML models"
+model_id = "openai/deepseek-ai/DeepSeek-R1-0528"
+api_key = "${GMI_CLOUD_API_KEY}"
+api_base = "https://api.gmi-serving.com/v1"
+
+# Manager agent parameters
+[manager_agent.parameters]
+max_steps = 10
+verbosity_level = 2
+additional_authorized_imports = ["visit_webpage"]
+stream_outputs = true
+use_structured_outputs_internally = true
+```
+
 ## Example Custom Tool
 
 ```python
