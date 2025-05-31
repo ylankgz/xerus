@@ -1,0 +1,106 @@
+# Xerus Tools Configuration
+# This file configures all built-in tools with their default settings
+# You can modify these values to customize tool behavior
+
+# Manager Agent Configuration
+[manager_agent]
+name = "xerus_manager_agent"
+description = "Analyzes, trains, fine-tunes and runs ML models"
+model_id = "openai/deepseek-ai/DeepSeek-R1-0528"
+api_key = "${GMI_CLOUD_API_KEY}"
+api_base = "https://api.gmi-serving.com/v1"
+
+# Manager agent parameters
+[manager_agent.parameters]
+max_steps = 10
+verbosity_level = 2
+additional_authorized_imports = ["visit_webpage"]
+stream_outputs = true
+use_structured_outputs_internally = true
+
+[tools.web_search_agent]
+name = "web_search_agent"
+description = "Searches the web for information"
+tool_class = "smolagents.WebSearchTool"
+model_id = "openai/meta-llama/Llama-4-Scout-17B-16E-Instruct"
+api_key = "${GMI_CLOUD_API_KEY}"
+api_base = "https://api.gmi-serving.com/v1"
+
+# Tool-specific parameters
+[tools.web_search_agent.parameters]
+max_results = 10
+engine = "duckduckgo"
+
+[tools.python_interpreter_agent]
+name = "python_interpreter_agent"
+description = "Executes Python code"
+tool_class = "smolagents.PythonInterpreterTool"
+model_id = "openai/deepseek-ai/DeepSeek-R1-0528"
+api_key = "${GMI_CLOUD_API_KEY}"
+api_base = "https://api.gmi-serving.com/v1"
+
+# Tool-specific parameters
+[tools.python_interpreter_agent.parameters]
+authorized_imports = ["math", "random", "datetime", "json", "re"]
+
+[tools.final_answer_agent]
+name = "final_answer_agent"
+description = "Provides the final answer to the user"
+tool_class = "smolagents.FinalAnswerTool"
+model_id = "openai/meta-llama/Llama-4-Scout-17B-16E-Instruct"
+api_key = "${GMI_CLOUD_API_KEY}"
+api_base = "https://api.gmi-serving.com/v1"
+
+# Tool-specific parameters (FinalAnswerTool doesn't have specific parameters)
+[tools.final_answer_agent.parameters]
+
+[tools.user_input_agent]
+name = "user_input_agent"
+description = "Accepts user input"
+tool_class = "smolagents.UserInputTool"
+model_id = "openai/meta-llama/Llama-4-Scout-17B-16E-Instruct"
+api_key = "${GMI_CLOUD_API_KEY}"
+api_base = "https://api.gmi-serving.com/v1"
+
+# Tool-specific parameters (UserInputTool doesn't have specific parameters)
+[tools.user_input_agent.parameters]
+
+[tools.duckduckgo_search_agent]
+name = "duckduckgo_search_agent"
+description = "Searches the web for information using DuckDuckGo"
+tool_class = "smolagents.DuckDuckGoSearchTool"
+model_id = "openai/meta-llama/Llama-4-Scout-17B-16E-Instruct"
+api_key = "${GMI_CLOUD_API_KEY}"
+api_base = "https://api.gmi-serving.com/v1"
+
+# Tool-specific parameters
+[tools.duckduckgo_search_agent.parameters]
+max_results = 10
+
+[tools.visit_webpage_agent]
+name = "visit_webpage_agent"
+description = "Visits a webpage"
+tool_class = "smolagents.VisitWebpageTool"
+model_id = "openai/meta-llama/Llama-4-Scout-17B-16E-Instruct"
+api_key = "${GMI_CLOUD_API_KEY}"
+api_base = "https://api.gmi-serving.com/v1"
+
+# Tool-specific parameters
+[tools.visit_webpage_agent.parameters]
+max_output_length = 40000
+
+# Example: Custom tool configuration
+# Uncomment and modify this section to add your own custom tools
+# [tools.my_custom_tool]
+# name = "my_custom_tool"
+# description = "My custom tool description"
+# tool_class = "my_module.MyCustomTool"  # Import path to your tool class
+# model_id = "openai/meta-llama/Llama-4-Scout-17B-16E-Instruct"
+# api_key = "${GMI_CLOUD_API_KEY}"
+# api_base = "https://api.gmi-serving.com/v1"
+#
+# # Custom tool parameters - these will be passed to your tool's __init__ method
+# [tools.my_custom_tool.parameters]
+# custom_param1 = "value1"
+# custom_param2 = 42
+# custom_param3 = ["item1", "item2", "item3"]

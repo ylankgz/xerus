@@ -15,8 +15,6 @@ class ModelFactory:
         model_id: Optional[str],
         api_key: Optional[str],
         api_base: Optional[str],
-        custom_role_conversions: Optional[str],
-        flatten_messages_as_text: Optional[bool],
         **kwargs,
     ) -> LiteLLMModel:
         """
@@ -26,10 +24,6 @@ class ModelFactory:
             model_id: ID or name of the model (e.g. "anthropic/claude-3-5-sonnet-latest").
             api_key: API key for LiteLLM service
             api_base: The base URL of the provider API to call the model.
-            custom_role_conversions: Custom role conversion mapping to convert message roles in others. 
-                Useful for specific models that do not support specific message roles like "system".
-            flatten_messages_as_text: Whether to flatten messages as text. 
-                Defaults to True for models that start with "ollama", "groq", "cerebras".
             **kwargs: Additional keyword arguments to pass to the OpenAI API. (e.g. temperature, max_tokens, etc.)
             
         Returns:
@@ -53,8 +47,6 @@ class ModelFactory:
                     model_id=model_id, 
                     api_key=api_key,
                     api_base=api_base,
-                    custom_role_conversions=custom_role_conversions,
-                    flatten_messages_as_text=flatten_messages_as_text,
                     **kwargs
                 )
             except Exception as e:

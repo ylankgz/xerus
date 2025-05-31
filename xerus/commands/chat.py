@@ -5,55 +5,57 @@ import rich_click as click
 
 from ..agent import EnhancedAgent
 from ..error_handler import handle_command_errors
-from ..model import ModelFactory
 from ..sessions import (
-    load_conversation_history,
-    save_conversation_history,
     create_session_file,
     save_session
 )
-from ..tools import setup_local_tools, setup_huggingface_tools, setup_built_in_tools
+from ..tools import setup_manager_agent
 from ..ui.display import console
 from ..ui.progress import create_initialization_progress
-from ..utils import parse_kwargs
-from smolagents import CodeAgent, LogLevel
 
-@click.command()
-@click.option("--model-id", help="[bold]Model identifier[/bold] (e.g. gpt-4, claude-2)")
-@click.option("--api-key", help="[bold]API key[/bold] for the service")
-@click.option("--api-base", help="[italic]Custom[/italic] API base URL")
-@click.option("--custom-role-conversions", type=click.Path(exists=True), help="Path to [underline]JSON file[/underline] with role conversions")
-@click.option("--flatten-messages-as-text", is_flag=True, help="Flatten messages to [bold]plain text[/bold]")
-@click.option("--built-in-tools", is_flag=True, help="Use built-in tools (web_search, python_interpreter, final_answer, user_input, duckduckgo_search, visit_webpage)")
-@click.option("--local-tools", help="Path to [underline]local tool file[/underline]")
-@click.option("--hub-tools", help="List of HuggingFace Hub repos")
-@click.option("--space-tools", help="List of HuggingFace Spaces (format: space_id:name:description)")
-@click.option("--collection-tools", help="HuggingFace Hub repo ID for a collection of tools")
-@click.option("--no-history", is_flag=True, default=False, help="Do not load conversation history")
+@click.command(context_settings={"allow_extra_args": True, "allow_interspersed_args": False})
 @click.option("--session-name", help="Name for this session (used in saved session file)")
-@click.argument("kwargs", nargs=-1, type=click.UNPROCESSED)
+@click.pass_context
 @handle_command_errors
 def chat(
-    model_id,
-    api_key,
-    api_base,
-    custom_role_conversions,
-    flatten_messages_as_text,
-    built_in_tools: bool,
-    local_tools: Optional[str],
-    hub_tools: Optional[str],
-    space_tools: Optional[str],
-    collection_tools: Optional[str],
-    no_history: bool,
+    ctx,
     session_name: Optional[str],
-    kwargs,
 ):
-    """[bold]Interactive chat with AI model[/bold] with given parameters.
+    """[bold]Interactive chat with AI model[/bold] configured via config file.
+
+    The manager agent and all tools are configured via ~/.xerus/config.toml
+
+    You can pass additional model parameters as key=value pairs:
 
     Examples:\n
-    [green]xerus chat --model-id gpt-4 --api-key sk-123[/green]\n
-    [green]xerus chat --session-name "My session" --help[/green] to see all available options \n
+    [green]xerus chat[/green]\n
+    [green]xerus chat --session-name "My session"[/green]\n
+    [green]xerus chat temperature=0.7 top_p=0.95[/green]\n
+    [green]xerus chat --session-name "test" temperature=0.3 max_tokens=1000[/green]\n
     """
+    # Parse additional kwargs from extra arguments
+    kwargs = {}
+    for arg in ctx.args:
+        if "=" in arg:
+            key, value = arg.split("=", 1)
+            # Try to convert to appropriate type
+            try:
+                # Try int first
+                kwargs[key] = int(value)
+            except ValueError:
+                try:
+                    # Try float
+                    kwargs[key] = float(value)
+                except ValueError:
+                    # Keep as string
+                    kwargs[key] = value
+        else:
+            console.print(f"[yellow]Warning: Ignoring invalid argument format: {arg}[/yellow]")
+            console.print("[yellow]Use key=value format for additional parameters[/yellow]")
+    
+    if kwargs:
+        console.print(f"[blue]Using additional parameters: {kwargs}[/blue]")
+    
     # Create a progress instance for initialization
     progress = create_initialization_progress()
     
@@ -63,47 +65,8 @@ def chat(
         # Add a task for agent initialization
         agent_task = progress.add_task("[bold green]Initializing agent...", total=100)
 
-        # Setup built-in tools
-        built_in_tools_agents_list = setup_built_in_tools(model_id, api_key, api_base) if built_in_tools else []
-
-
-        # Setup local tools
-        local_tools_agents_list = setup_local_tools(local_tools, model_id, api_key, api_base)
-        
-        # Setup Hugging Face tools
-        space_tools_agents_list, collection_tools_agents_list, hub_tools_agents_list = setup_huggingface_tools(
-            model_id, api_key, api_base, hub_tools, space_tools, collection_tools
-        )
-
-        # Parse JSON strings for client_kwargs and custom_role_conversions if provided
-        role_conversions_dict = json.loads(custom_role_conversions) if custom_role_conversions else None
-    
-        client = ModelFactory.create_client(
-            model_id=model_id or "openai/deepseek-ai/DeepSeek-R1",
-            api_key=api_key or os.environ.get("LITELLM_API_KEY"),
-            api_base=api_base,
-            custom_role_conversions=role_conversions_dict,
-            flatten_messages_as_text=flatten_messages_as_text,
-            **parse_kwargs(kwargs)
-        )
-
-        # Create manager agent
-        manager_agent = CodeAgent(
-            tools=[],
-            model=client,
-            managed_agents=[
-                *built_in_tools_agents_list,
-                *local_tools_agents_list,
-                *space_tools_agents_list,
-                *collection_tools_agents_list,
-                *hub_tools_agents_list
-            ],
-            additional_authorized_imports=["*"],
-            max_steps=10,
-            verbosity_level=LogLevel.ERROR,
-            name="xerus_manager_agent",
-            description="Analyzes, trains, fine-tunes and runs ML models"
-        )
+        # Setup manager agent from config with additional kwargs
+        manager_agent = setup_manager_agent(**kwargs)
 
         # Create the enhanced agent
         agent = EnhancedAgent(manager_agent)
@@ -111,11 +74,6 @@ def chat(
         # Mark initialization as complete
         progress.update(agent_task, completed=100)
 
-    # Load conversation history
-    history = [] if no_history else load_conversation_history()
-    if history and not no_history:
-        console.print(f"[bold green]Loaded conversation history with {len(history)} messages[/bold green]")
-    
     # Create a session file if a name is provided
     session_file = create_session_file(session_name) if session_name else None
     
@@ -124,8 +82,6 @@ def chat(
     
     console.print("\n[bold blue]Interactive Chat Mode[/bold blue]")
     console.print("[green]Type 'exit', 'quit', or use Ctrl+C to end the session[/green]")
-    console.print("[green]Type 'history' to view conversation history[/green]")
-    console.print("[green]Type 'clear' to clear the conversation history[/green]")
     console.print("[green]Type 'save' to save the current session[/green]\n")
 
     # Main chat loop
@@ -139,29 +95,9 @@ def chat(
                 console.print("[bold blue]Exiting chat session[/bold blue]")
                 # Save session on exit if a name was provided
                 if session_name and session_file and session_history:
-                    save_session(session_file, session_history, {
-                        "model_id": model_id,
-                    })
+                    save_session(session_file, session_history, {})
                     console.print(f"[green]Session saved to {session_file}[/green]")
                 break
-            
-            # Check for history command
-            if user_input.lower() == "history":
-                if not history:
-                    console.print("[yellow]No conversation history yet.[/yellow]")
-                else:
-                    for idx, entry in enumerate(history):
-                        role = "[bold cyan]You[/bold cyan]" if entry["role"] == "user" else "[bold green]Agent[/bold green]"
-                        console.print(f"{idx+1}. {role}: {entry['content'][:100]}{'...' if len(entry['content']) > 100 else ''}")
-                continue
-            
-            # Check for clear command
-            if user_input.lower() == "clear":
-                history = []
-                agent.clear_history()
-                session_history = []
-                console.print("[yellow]Conversation history cleared.[/yellow]")
-                continue
             
             # Check for save command
             if user_input.lower() == "save":
@@ -170,18 +106,15 @@ def chat(
                     continue
                 
                 save_file = session_file or create_session_file(session_name)
-                save_session(save_file, session_history, {
-                    "model_id": model_id,
-                })
+                save_session(save_file, session_history, {})
                 console.print(f"[green]Session saved to {save_file}[/green]")
                 continue
             
             # Process normal input
-            history.append({"role": "user", "content": user_input})
             session_history.append({"role": "user", "content": user_input})
             
-            # Create a context string from history
-            include_history = len(history) > 1
+            # Create a context string from session history
+            include_history = len(session_history) > 1
             
             # Run the agent with context and history
             response = agent.run(
@@ -189,13 +122,8 @@ def chat(
                 include_history=include_history,
             )
             
-            # Add to histories
-            history.append({"role": "assistant", "content": response})
+            # Add to session history
             session_history.append({"role": "assistant", "content": response})
-            
-            # Save history if not disabled
-            if not no_history:
-                save_conversation_history(history)
                 
         except KeyboardInterrupt:
             console.print("\n[bold blue]Chat session interrupted[/bold blue]")
