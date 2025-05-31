@@ -1,6 +1,5 @@
 import os
 import importlib.util
-import toml
 import pkg_resources
 from typing import List, Optional, Dict, Any
 
@@ -9,6 +8,7 @@ from smolagents import Tool, CodeAgent, LogLevel
 from .ui.display import console
 from .model import ModelFactory
 from .errors import AgentRuntimeError
+from .config import load_config
 
 def create_tool_agent(
     model_id,
@@ -61,53 +61,6 @@ def create_tool_agent(
             "Check model configuration and tool compatibility for tool: {tool}"
         )
 
-def ensure_config_exists():
-    """Ensure ~/.xerus directory and config.toml exist, create from template if needed."""
-    xerus_dir = os.path.expanduser("~/.xerus")
-    config_path = os.path.join(xerus_dir, "config.toml")
-    
-    # Create ~/.xerus directory if it doesn't exist
-    if not os.path.exists(xerus_dir):
-        os.makedirs(xerus_dir, exist_ok=True)
-        console.print(f"[green]Created Xerus config directory: {xerus_dir}[/green]")
-    
-    # Copy template config if config.toml doesn't exist
-    if not os.path.exists(config_path):
-        try:
-            # Try to get the template from package resources
-            template_content = pkg_resources.resource_string(__name__, 'config_template.toml').decode('utf-8')
-            with open(config_path, 'w') as f:
-                f.write(template_content)
-            console.print(f"[green]Created default config file: {config_path}[/green]")
-            console.print("[yellow]You can customize tool settings by editing this file[/yellow]")
-        except Exception as e:
-            console.print(f"[red]Error creating config file: {e}[/red]")
-            console.print("[yellow]Continuing with default hardcoded settings[/yellow]")
-
-def load_config() -> Dict[str, Any]:
-    """Load configuration from ~/.xerus/config.toml"""
-    # Ensure config exists first
-    ensure_config_exists()
-    
-    config_path = os.path.expanduser("~/.xerus/config.toml")
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, 'r') as f:
-                config = toml.load(f)
-            # Expand environment variables in the config
-            for tool_name, tool_config in config.get('tools', {}).items():
-                for key, value in tool_config.items():
-                    if isinstance(value, str) and value and value.startswith('${') and value.endswith('}'):
-                        env_var = value[2:-1]  # Remove ${ and }
-                        tool_config[key] = os.environ.get(env_var, value)
-            return config
-        except Exception as e:
-            console.print(f"[red]Error loading config: {e}[/red]")
-            return {}
-    else:
-        console.print(f"[yellow]Config file not found at {config_path}[/yellow]")
-        return {}
-
 def import_tool_class(tool_class_path: str):
     """Dynamically import a tool class from its module path."""
     try:
@@ -121,7 +74,7 @@ def import_tool_class(tool_class_path: str):
 
 def setup_built_in_tools():
     """Setup and return built-in tools as agent list."""
-    # Load config from TOML file
+    # Load config from JSON file
     config = load_config()
 
     tools = []
@@ -195,7 +148,7 @@ def setup_manager_agent(**kwargs):
     
     if not manager_config:
         console.print("[red]Error: No manager_agent configuration found in config file[/red]")
-        console.print("[yellow]Please ensure ~/.xerus/config.toml contains a [manager_agent] section[/yellow]")
+        console.print("[yellow]Please ensure ~/.xerus/config.json contains a [manager_agent] section[/yellow]")
         raise ValueError("Manager agent configuration missing")
     
     # Get manager agent parameters

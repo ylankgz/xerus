@@ -22,7 +22,6 @@ setup(
         "smolagents[litellm,toolkit]>=1.15.0",
         "rich-click>=1.8.8",
         "python-dotenv>=1.1.0",
-        "toml>=0.10.2",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
