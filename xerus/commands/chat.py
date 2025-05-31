@@ -13,20 +13,49 @@ from ..tools import setup_manager_agent
 from ..ui.display import console
 from ..ui.progress import create_initialization_progress
 
-@click.command()
+@click.command(context_settings={"allow_extra_args": True, "allow_interspersed_args": False})
 @click.option("--session-name", help="Name for this session (used in saved session file)")
+@click.pass_context
 @handle_command_errors
 def chat(
+    ctx,
     session_name: Optional[str],
 ):
     """[bold]Interactive chat with AI model[/bold] configured via config file.
 
     The manager agent and all tools are configured via ~/.xerus/config.toml
 
+    You can pass additional model parameters as key=value pairs:
+
     Examples:\n
     [green]xerus chat[/green]\n
     [green]xerus chat --session-name "My session"[/green]\n
+    [green]xerus chat temperature=0.7 top_p=0.95[/green]\n
+    [green]xerus chat --session-name "test" temperature=0.3 max_tokens=1000[/green]\n
     """
+    # Parse additional kwargs from extra arguments
+    kwargs = {}
+    for arg in ctx.args:
+        if "=" in arg:
+            key, value = arg.split("=", 1)
+            # Try to convert to appropriate type
+            try:
+                # Try int first
+                kwargs[key] = int(value)
+            except ValueError:
+                try:
+                    # Try float
+                    kwargs[key] = float(value)
+                except ValueError:
+                    # Keep as string
+                    kwargs[key] = value
+        else:
+            console.print(f"[yellow]Warning: Ignoring invalid argument format: {arg}[/yellow]")
+            console.print("[yellow]Use key=value format for additional parameters[/yellow]")
+    
+    if kwargs:
+        console.print(f"[blue]Using additional parameters: {kwargs}[/blue]")
+    
     # Create a progress instance for initialization
     progress = create_initialization_progress()
     
@@ -36,8 +65,8 @@ def chat(
         # Add a task for agent initialization
         agent_task = progress.add_task("[bold green]Initializing agent...", total=100)
 
-        # Setup manager agent from config
-        manager_agent = setup_manager_agent()
+        # Setup manager agent from config with additional kwargs
+        manager_agent = setup_manager_agent(**kwargs)
 
         # Create the enhanced agent
         agent = EnhancedAgent(manager_agent)

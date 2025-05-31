@@ -181,8 +181,13 @@ def setup_built_in_tools():
 
     return built_in_tools_agents_list
 
-def setup_manager_agent():
-    """Setup and return manager agent from config."""
+def setup_manager_agent(**kwargs):
+    """Setup and return manager agent from config.
+    
+    Args:
+        **kwargs: Additional keyword arguments to pass to model creation
+                 (e.g., temperature, top_p, max_tokens, etc.)
+    """
     config = load_config()
     
     # Get manager agent config
@@ -199,12 +204,13 @@ def setup_manager_agent():
     # Get built-in tools
     built_in_tools_agents_list = setup_built_in_tools()
     
-    # Create the model client
+    # Create the model client with additional kwargs
     try:
         client = ModelFactory.create_client(
             model_id=manager_config.get("model_id"),
             api_key=manager_config.get("api_key"),
-            api_base=manager_config.get("api_base")
+            api_base=manager_config.get("api_base"),
+            **kwargs  # Pass through additional kwargs
         )
     except Exception as e:
         console.print(f"[red]Error creating manager agent model client: {e}[/red]")
