@@ -42,21 +42,18 @@ def print_project_info():
     
     # Basic usage examples
     examples = [
-        ("Fine-tune a model:", "xerus run \"Fine-tune BERT on my text classification dataset\" --built-in-tools"),
-        ("Train with GPU:", "xerus run \"Train a CNN with GPU acceleration\" --model-id mistralai/Mixtral-8x7B-Instruct-v0.1 --local-tools ./ml_helpers.py"),
-        ("Hyperparameter tuning:", "xerus run \"Optimize hyperparameters for my XGBoost model\" --built-in-tools --api-base https://your-custom-endpoint.com/v1"),
-        ("Custom model evaluation:", "xerus run \"Evaluate my NLP model on test dataset\" --model-id gpt-4 --api-key YOUR_API_KEY"),
-        ("Build data pipeline:", "xerus run \"Create a data preprocessing pipeline for my images\" --model-id anthropic/claude-3-opus-20240229 --built-in-tools"),
-        ("ONNX conversion:", "xerus run \"Convert my PyTorch model to ONNX format\" --hub-tools username/onnx-converter"),
-        ("Dataset exploration:", "xerus run \"Analyze my tabular dataset\" --collection-tools huggingface-tools/data-analysis"),
-        ("Multi-agent ML chat:", "xerus chat --model-id anthropic/claude-3-sonnet-20240229 --built-in-tools --session-name ml_experiment"),
-        ("Interactive debugging:", "xerus chat --local-tools ./debug_tools.py --hub-tools username/model-analyzer"),
-        ("GPU training chat:", "xerus chat --model-id openai/gpt-4 --space-tools stability-ai/sdxl:image_gen:Generate images from text"),
-        ("Save experiment:", "xerus chat --built-in-tools --model-id mistralai/Mistral-7B-Instruct-v0.1 --session-name training_run_1"),
-        ("Collaborative ML session:", "xerus chat --model-id openai/gpt-4 --built-in-tools --collection-tools username/collaborative-ml"),
-        ("Expert mode debugging:", "xerus chat --model-id anthropic/claude-3-opus-20240229 --flatten-messages-as-text --no-history"),
-        ("Resume training:", "xerus chat --model-id openai/gpt-4-turbo --built-in-tools --session-name continue_training"),
-        ("Deploy trained model:", "xerus run \"Package and deploy my trained model to production\" --built-in-tools --hub-tools username/model-deployment"),
+        ("Fine-tune a model:", "xerus run \"Fine-tune BERT on my text classification dataset\""),
+        ("Train with GPU:", "xerus run \"Train a CNN with GPU acceleration\" "),
+        ("Hyperparameter tuning:", "xerus run \"Optimize hyperparameters for my XGBoost model\""),
+        ("Custom model evaluation:", "xerus run \"Evaluate my NLP model on test dataset\""),
+        ("Build data pipeline:", "xerus run \"Create a data preprocessing pipeline for my images\""),
+        ("ONNX conversion:", "xerus run \"Convert my PyTorch model to ONNX format\""),
+        ("Dataset exploration:", "xerus run \"Analyze my tabular dataset\""),
+        ("Multi-agent ML chat:", "xerus chat --session-name ml_experiment"),
+        ("Interactive debugging:", "xerus chat"),
+        ("Save experiment:", "xerus chat --session-name training_run_1"),
+        ("Resume training:", "xerus chat --session-name continue_training"),
+        ("Deploy trained model:", "xerus run \"Package and deploy my trained model to production\""),
         ("Load experiment:", "xerus load ml_experiment_20230615_123045"),
         ("List all sessions:", "xerus sessions")
     ]
@@ -84,52 +81,8 @@ def print_project_info():
     options_table.add_column("Option", style="bold green")
     options_table.add_column("Description")
     options_table.add_row(
-        "--model-id", 
-        "Model identifier (e.g., anthropic/claude-3-sonnet-20240229, openai/gpt-4o, xai/grok-2-latest)"
-    )
-    options_table.add_row(
-        "--api-key", 
-        "API key for model service (alternatively use environment variables)"
-    )
-    options_table.add_row(
-        "--api-base", 
-        "Base URL for API (for OpenAI and similar APIs)"
-    )
-    options_table.add_row(
-        "--custom-role-conversions", 
-        "Path to JSON file with role conversion mappings (for OpenAI)"
-    )
-    options_table.add_row(
-        "--flatten-messages-as-text", 
-        "Whether to flatten messages as text (for OpenAI)"
-    )
-    options_table.add_row(
-        "--built-in-tools", 
-        "Use built-in tools (web_search, python_interpreter, final_answer, user_input, etc.)"
-    )
-    options_table.add_row(
-        "--local-tools", 
-        "Path to a local Python file containing tool definitions"
-    )
-    options_table.add_row(
-        "--hub-tools", 
-        "Hugging Face Hub repo ID for a tool (e.g., username/tool-name)"
-    )
-    options_table.add_row(
-        "--space-tools", 
-        "Hugging Face Space ID to import as a tool (format: space_id:name:description)"
-    )
-    options_table.add_row(
-        "--collection-tools", 
-        "Hugging Face Hub repo ID for a collection of tools"
-    )
-    options_table.add_row(
         "--session-name", 
         "Name for the current session (used in saved session files)"
-    )
-    options_table.add_row(
-        "--no-history", 
-        "Don't load or save conversation history in chat mode"
     )
     options_table.add_row(
         "--prompt", 

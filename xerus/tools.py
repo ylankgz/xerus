@@ -4,7 +4,7 @@ import toml
 import pkg_resources
 from typing import List, Optional, Dict, Any
 
-from smolagents import Tool, ToolCollection, load_tool, CodeAgent, LogLevel
+from smolagents import Tool, CodeAgent, LogLevel
 
 from .ui.display import console
 from .model import ModelFactory
@@ -242,94 +242,3 @@ def setup_manager_agent(**kwargs):
     except Exception as e:
         console.print(f"[red]Error creating manager agent: {e}[/red]")
         raise
-
-def setup_local_tools(local_tools_path: Optional[str], model_id: str, api_key: str, api_base: str):
-    """Setup and return local tools as agent list."""
-    local_tools_agents_list = []
-    
-    if not local_tools_path:
-        return local_tools_agents_list
-    
-    tool_index = 0
-    for tool_spec in local_tools_path.split(","):
-        tool_spec = tool_spec.strip()  # Remove whitespace
-        if tool_spec and os.path.exists(tool_spec) and tool_spec.endswith(".py"):
-            spec_obj = importlib.util.spec_from_file_location("local_tool", tool_spec)
-            if not spec_obj:
-                continue
-            local_tool_module = importlib.util.module_from_spec(spec_obj)
-            spec_obj.loader.exec_module(local_tool_module)
-            for name in dir(local_tool_module):
-                obj = getattr(local_tool_module, name)
-                if isinstance(obj, Tool):
-                    local_tools_agents_list.append(create_tool_agent(
-                        model_id,
-                        api_key,
-                        api_base,
-                        [obj],
-                        name=obj.name,
-                        description=obj.description
-                    ))
-                    tool_index += 1
-                    
-    return local_tools_agents_list
-
-def setup_huggingface_tools(
-    model_id: str, 
-    api_key: str, 
-    api_base: str,
-    hub_tools: Optional[str] = None,
-    space_tools: Optional[str] = None,
-    collection_tools: Optional[str] = None
-):
-    """Setup and return Hugging Face tools as agent list."""
-    space_tools_agents_list = []
-    collection_tools_agents_list = []
-    hub_tools_agents_list = []
-
-    token = os.environ.get("HF_TOKEN")
-    if not token:
-        console.print("[yellow]Warning: No Hugging Face token provided for loading Space, Hub or Collections tools[/yellow]")
-        return [], [], []
-        
-    # Setup space tools
-    if space_tools:
-        for i, tool_spec in enumerate(space_tools.split(",")):
-            parts = tool_spec.split(":")
-            space_id = parts[0]
-            name = parts[1]
-            description = parts[2] if len(parts) > 2 else ""
-            space_tools_agents_list.append(create_tool_agent(
-                model_id,
-                api_key,
-                api_base,
-                Tool.from_space(space_id, name=name, description=description, token=token),
-                name=name,
-                description=description
-            ))
-    
-    # Setup collection tools
-    if collection_tools:
-        for i, tool_spec in enumerate(collection_tools.split(",")):
-            tool_collection = ToolCollection.from_hub(tool_spec, token=token)
-            collection_tools_agents_list.append(create_tool_agent(
-                model_id,
-                api_key,
-                api_base,
-                [*tool_collection.tools],
-            ))
-
-    # Setup hub tools
-    if hub_tools:
-        for i, tool_spec in enumerate(hub_tools.split(",")):
-            hub_tool = load_tool(tool_spec, token=token, trust_remote_code=True)
-            hub_tools_agents_list.append(create_tool_agent(
-                model_id,
-                api_key,
-                api_base,
-                [hub_tool],
-                name=hub_tool.name,
-                description=hub_tool.description
-            ))
-            
-    return space_tools_agents_list, collection_tools_agents_list, hub_tools_agents_list 
