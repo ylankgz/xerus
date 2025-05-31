@@ -13,57 +13,6 @@ from .errors import (
 )
 
 console = Console()
-
-def create_tool_agent(
-    model_id,
-    api_key,
-    api_base,
-    tools: List[Tool],
-    name: Optional[str] = None,
-    description: Optional[str] = None,
-    **kwargs
-)-> CodeAgent:
-    """
-    Create a tool agent with specified model and tool.
-    
-    Args:
-        model_id: ID or name of the model
-        api_key: API key for the model service
-        tool: Tool instance
-        api_base: The base URL of the API server (for OpenAI and similar APIs)
-        name: Optional agent name for uniqueness
-        description: Optional description of the agent
-    Returns:
-        The initialized CodeAgent
-
-    Raises:
-        AgentRuntimeError: For other agent setup errors
-    """
-
-    tool_model = ModelFactory.create_client(
-        model_id=model_id or "openai/o4-mini",
-        api_key=api_key or os.environ.get("LITELLM_API_KEY"),
-        api_base=api_base,
-        custom_role_conversions=None,
-        flatten_messages_as_text=None,
-        **kwargs
-    )
-
-    # Initialize the tool agent
-    try:
-        agent = CodeAgent(
-            tools=tools,
-            model=tool_model,
-            name=name,
-            description=description,
-            **kwargs
-        )
-        return agent
-    except Exception as e:
-        raise AgentRuntimeError(
-            f"Failed to initialize tool agent: {e}",
-            "Check model configuration and tool compatibility for tool: {tool}"
-        )
     
 class EnhancedAgent:
     """
