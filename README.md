@@ -30,9 +30,92 @@ uv sync
 pip install -e .
 ```
 
+## Getting Started
+
+Before using Xerus, you need to initialize it with an AI provider. Xerus supports multiple providers and makes setup easy with the `init` command.
+
+### Initialize Xerus
+
+Run the initialization command to set up Xerus with your preferred AI provider:
+
+```bash
+xerus init
+```
+
+This will:
+1. Present you with available AI providers
+2. Prompt you to enter your API key securely
+3. Create configuration files in `~/.xerus/`
+4. Set secure permissions on sensitive files
+
+### Supported Providers
+
+Xerus currently supports these AI providers:
+
+#### Nebius
+- **Description**: Nebius AI Studio - High-performance cloud AI platform
+- **Website**: https://studio.nebius.ai/
+- **API Key Environment Variable**: `NEBIUS_API_KEY`
+- **Models**: Meta-Llama-3.1 series (8B, 70B)
+
+#### Novita
+- **Description**: Novita AI - Affordable AI inference platform  
+- **Website**: https://novita.ai/
+- **API Key Environment Variable**: `NOVITA_API_KEY`
+- **Models**: Meta-Llama-3.1 series (8B, 70B)
+
+### Quick Setup Examples
+
+**Interactive setup** (recommended for first-time users):
+```bash
+xerus init
+# Follow the prompts to select provider and enter API key
+```
+
+**Direct provider selection**:
+```bash
+xerus init --provider nebius
+# Prompts for API key only
+```
+
+**Complete non-interactive setup**:
+```bash
+xerus init --provider novita --api-key YOUR_API_KEY
+```
+
+**Force overwrite existing configuration**:
+```bash
+xerus init --provider nebius --force
+```
+
+### Security Features
+
+- **Secure Permissions**: The `.env` file containing your API key is automatically set to `600` permissions (owner read/write only)
+- **Hidden Input**: API keys are entered with hidden input for security
+- **Environment Detection**: Automatically detects existing API keys in your environment
+
+### What Gets Created
+
+The `init` command creates:
+
+- `~/.xerus/config.json` - Tool configurations and model settings for your chosen provider
+- `~/.xerus/.env` - Your API key and other environment variables (with secure 600 permissions)
+
+### Initialization Check
+
+All Xerus commands automatically check if you're properly initialized. If not, you'll see a helpful message:
+
+```
+Xerus is not initialized!
+Please run the following command to initialize Xerus:
+xerus init
+
+This will set up your configuration with an AI provider.
+```
+
 ## Quick Start
 
-Run Xerus with a simple prompt:
+After initializing Xerus, you can start using it immediately:
 
 ```bash
 xerus run --prompt "What is the current weather in New York City?"
@@ -44,58 +127,138 @@ Start an interactive chat session:
 xerus chat
 ```
 
-The manager agent and all tools are configured via `~/.xerus/config.toml`. By default, Xerus comes with a comprehensive set of built-in tools including web search, Python code execution, and more.
+The manager agent and all tools are configured via `~/.xerus/config.json`. By default, Xerus comes with a comprehensive set of built-in tools including web search, Python code execution, and more.
 
 ## Configuration
 
-Xerus uses a flexible configuration system that allows you to customize the manager agent and all tools via a configuration file located at `~/.xerus/config.toml`. This eliminates the need to modify any core Xerus code when adding new tools or changing settings.
+Xerus uses a flexible configuration system that allows you to customize the manager agent and all tools via a configuration file located at `~/.xerus/config.json`. This eliminates the need to modify any core Xerus code when adding new tools or changing settings.
 
 ### Manager Agent Configuration
 
-The manager agent and all tools are now configurable via `~/.xerus/config.toml`:
+The manager agent and all tools are now configurable via `~/.xerus/config.json`:
 
-```toml
-# Manager Agent Configuration
-[manager_agent]
-name = "xerus_manager_agent"
-description = "Analyzes, trains, fine-tunes and runs ML models"
-model_id = "openai/deepseek-ai/DeepSeek-R1-0528"
-api_key = "${GMI_CLOUD_API_KEY}"
-api_base = "https://api.gmi-serving.com/v1"
-
-# Manager agent parameters
-[manager_agent.parameters]
-max_steps = 10
-verbosity_level = 2
-additional_authorized_imports = ["visit_webpage"]
-stream_outputs = true
-use_structured_outputs_internally = true
+```json
+{
+  "manager_agent": {
+    "name": "xerus_manager_agent",
+    "description": "Analyzes, trains, fine-tunes and runs ML models",
+    "model_id": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+    "api_key": "${NEBIUS_API_KEY}",
+    "api_base": "https://api.studio.nebius.ai/v1",
+    "parameters": {
+      "max_steps": 10,
+      "verbosity_level": 2,
+      "additional_authorized_imports": ["visit_webpage"],
+      "stream_outputs": true,
+      "use_structured_outputs_internally": true
+    }
+  }
+}
 ```
 
-### Managed Agents Configuration
-```toml
-[tools.web_search_agent]
-name = "web_search_agent"
-description = "Searches the web for information"
-tool_class = "smolagents.WebSearchTool"
-model_id = "openai/meta-llama/Llama-4-Scout-17B-16E-Instruct"
-api_key = "${GMI_CLOUD_API_KEY}"
-api_base = "https://api.gmi-serving.com/v1"
+### Tool Configuration
 
-# Tool-specific parameters
-[tools.web_search_agent.parameters]
-max_results = 10
-engine = "duckduckgo"
+Each tool can be configured with provider-specific settings:
+
+```json
+{
+  "tools": {
+    "web_search_agent": {
+      "name": "web_search_agent",
+      "description": "Searches the web for information",
+      "tool_class": "smolagents.WebSearchTool",
+      "model_id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "api_key": "${NEBIUS_API_KEY}",
+      "api_base": "https://api.studio.nebius.ai/v1",
+      "parameters": {
+        "max_results": 10,
+        "engine": "duckduckgo"
+      }
+    }
+  }
+}
+```
+
+### Using Different Models and Providers Per Tool
+
+**Xerus allows you to use different models and providers for each tool independently**. This powerful feature lets you optimize performance and cost by choosing the best model for each specific task.
+
+#### How It Works
+
+Each tool in your `~/.xerus/config.json` can have its own:
+- `model_id` - Different model for each tool
+- `api_key` - Different provider credentials  
+- `api_base` - Different API endpoints/providers
+
+#### Example: Mixed Providers and Models
+
+Here's an example showing different providers and models for different tools:
+
+```json
+{
+  "manager_agent": {
+    "name": "xerus_manager_agent", 
+    "model_id": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+    "api_key": "${NEBIUS_API_KEY}",
+    "api_base": "https://api.studio.nebius.ai/v1"
+  },
+  "tools": {
+    "web_search_agent": {
+      "name": "web_search_agent",
+      "tool_class": "smolagents.WebSearchTool", 
+      "model_id": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+      "api_key": "${NOVITA_API_KEY}",
+      "api_base": "https://api.novita.ai/v3/openai"
+    },
+    "python_interpreter": {
+      "name": "python_interpreter",
+      "tool_class": "smolagents.PythonInterpreterTool",
+      "model_id": "openai/gpt-4o-mini", 
+      "api_key": "${OPENAI_API_KEY}",
+      "api_base": "https://api.openai.com/v1"
+    },
+    "custom_analysis_tool": {
+      "name": "data_analyzer",
+      "tool_class": "my_tools.DataAnalyzer",
+      "model_id": "anthropic/claude-3-sonnet-20240229",
+      "api_key": "${ANTHROPIC_API_KEY}", 
+      "api_base": "https://api.anthropic.com"
+    }
+  }
+}
+```
+
+#### Benefits of Per-Tool Configuration
+
+- **Cost Optimization**: Use cheaper models for simple tasks, premium models for complex ones
+- **Performance Tuning**: Match model capabilities to specific tool requirements  
+- **Provider Redundancy**: Distribute load across multiple providers
+- **Specialized Models**: Use domain-specific models where they excel
+- **Fallback Options**: Configure backup providers for reliability
+
+This flexibility allows you to create highly optimized AI agent workflows tailored to your specific needs and budget constraints.
+
+### Environment Variables
+
+Your API keys and other sensitive information are stored in `~/.xerus/.env`:
+
+```bash
+# Xerus Environment Configuration for Nebius
+# API key for Nebius
+NEBIUS_API_KEY=your_api_key_here
+
+# Optional: Add other environment variables here
+# GITHUB_TOKEN=your_github_token_here
 ```
 
 ### Universal Parameter System
 
-Xerus features a universal parameter system that allows you to add any tool with any parameters without modifying core code. All parameters from `[tools.{tool_name}.parameters]` are automatically passed to your tool's `__init__()` method via `**kwargs`.
+Xerus features a universal parameter system that allows you to add any tool with any parameters without modifying core code. All parameters from `tools.{tool_name}.parameters` are automatically passed to your tool's `__init__()` method via `**kwargs`.
 
 #### How it Works
 
 1. **Dynamic Import**: The system reads `tool_class` and dynamically imports the tool using `importlib`
-2. **Universal Parameter Passing**: All parameters from `[tools.{tool_name}.parameters]` are passed via `**kwargs`
+2. **Universal Parameter Passing**: All parameters from `tools.{tool_name}.parameters` are passed via `**kwargs`
 3. **Automatic Instantiation**: `MyCustomTool(**tool_params)` is called automatically
 4. **Error Handling**: If parameters don't match, it falls back gracefully
 5. **Zero Code Changes**: Never need to modify any core Xerus files
@@ -108,7 +271,6 @@ Xerus features a universal parameter system that allows you to add any tool with
 - ✅ **Flexible**: Add/remove tools just by editing config
 - ✅ **Safe**: Graceful error handling and fallbacks
 - ✅ **Future-proof**: Works with tools you haven't written yet
-
 
 ## Extra Parameters
 
@@ -219,23 +381,27 @@ class MyCustomTool(Tool):
 
 #### Configuration
 
-Add this to your `~/.xerus/config.toml`:
+Add this to your `~/.xerus/config.json`:
 
-```toml
-[tools.my_custom_tool]
-name = "my_custom_tool"
-description = "A custom tool that does something amazing"
-tool_class = "my_custom_tool.MyCustomTool"  # Module.ClassName path
-model_id = "openai/gpt-4o-mini"
-api_key = "${MY_API_KEY}"
-api_base = "https://api.myservice.com/v1"
-
-# These parameters will be automatically passed to MyCustomTool.__init__()
-[tools.my_custom_tool.parameters]
-max_items = 20
-api_timeout = 60
-debug_mode = true
-allowed_domains = ["example.com", "mysite.org"]
+```json
+{
+  "tools": {
+    "my_custom_tool": {
+      "name": "my_custom_tool",
+      "description": "A custom tool that does something amazing",
+      "tool_class": "my_custom_tool.MyCustomTool",
+      "model_id": "openai/gpt-4o-mini",
+      "api_key": "${MY_API_KEY}",
+      "api_base": "https://api.myservice.com/v1",
+      "parameters": {
+        "max_items": 20,
+        "api_timeout": 60,
+        "debug_mode": true,
+        "allowed_domains": ["example.com", "mysite.org"]
+      }
+    }
+  }
+}
 ```
 
 #### Simple Tool with Decorators
@@ -262,34 +428,44 @@ def greet(name: str) -> str:
 #### Advanced Examples
 
 **Using Third-Party Tools:**
-```toml
-[tools.huggingface_tool]
-name = "text_classifier"
-description = "Classifies text using Hugging Face"
-tool_class = "transformers.AutoModelForSequenceClassification"
-model_id = "openai/gpt-4o-mini"
-api_key = "${API_KEY}"
-api_base = "https://api.openai.com/v1"
-
-[tools.huggingface_tool.parameters]
-model_name = "bert-base-uncased"
-num_labels = 2
+```json
+{
+  "tools": {
+    "huggingface_tool": {
+      "name": "text_classifier",
+      "description": "Classifies text using Hugging Face",
+      "tool_class": "transformers.AutoModelForSequenceClassification",
+      "model_id": "openai/gpt-4o-mini",
+      "api_key": "${API_KEY}",
+      "api_base": "https://api.openai.com/v1",
+      "parameters": {
+        "model_name": "bert-base-uncased",
+        "num_labels": 2
+      }
+    }
+  }
+}
 ```
 
 **Using External API Tools:**
-```toml
-[tools.external_api_tool]
-name = "weather_api"
-description = "Gets weather information"
-tool_class = "weather_tools.WeatherAPITool"
-model_id = "openai/gpt-4o-mini"
-api_key = "${API_KEY}"
-api_base = "https://api.openai.com/v1"
-
-[tools.external_api_tool.parameters]
-api_key = "${WEATHER_API_KEY}"
-timeout = 30
-units = "metric"
+```json
+{
+  "tools": {
+    "external_api_tool": {
+      "name": "weather_api",
+      "description": "Gets weather information",
+      "tool_class": "weather_tools.WeatherAPITool",
+      "model_id": "openai/gpt-4o-mini",
+      "api_key": "${API_KEY}",
+      "api_base": "https://api.openai.com/v1",
+      "parameters": {
+        "api_key": "${WEATHER_API_KEY}",
+        "timeout": 30,
+        "units": "metric"
+      }
+    }
+  }
+}
 ```
 
 #### No Manual Registry Required!
@@ -324,16 +500,15 @@ image_tool = Tool(
 
 After creating your custom tool file, you can use it with Xerus by simply adding it to your configuration file.
 
-
 ## Command Options
 
 With the configuration-based approach, commands are much simpler:
 
 ```bash
-# Run with a prompt - all configuration from ~/.xerus/config.toml
+# Run with a prompt - all configuration from ~/.xerus/config.json
 xerus run --prompt "Your prompt here"
 
-# Start interactive chat - all configuration from ~/.xerus/config.toml  
+# Start interactive chat - all configuration from ~/.xerus/config.json  
 xerus chat
 
 # Save sessions with custom names
@@ -347,10 +522,41 @@ xerus chat --session-name "research_session"
 Usage: xerus [OPTIONS] COMMAND [ARGS]...
 
 Commands:
+  init        Initialize Xerus with an AI provider
   run         Run the agent with a prompt
   chat        Start an interactive chat session
   sessions    List all saved sessions
   load        Load and display a saved session
+```
+
+#### Init Command
+
+Initialize Xerus with your preferred AI provider:
+
+```bash
+xerus init [OPTIONS]
+```
+
+Options:
+```
+  --provider [nebius|novita]  Choose AI provider
+  --api-key TEXT              API key for the selected provider (will prompt if not provided)
+  --force                     Force overwrite existing configuration
+```
+
+Examples:
+```bash
+# Interactive setup - prompts for provider and API key
+xerus init
+
+# Specify provider, prompt for API key
+xerus init --provider nebius
+
+# Provide both provider and API key
+xerus init --provider novita --api-key YOUR_API_KEY
+
+# Force overwrite existing configuration
+xerus init --provider nebius --force
 ```
 
 #### Run Command
@@ -390,40 +596,101 @@ xerus load SESSION_FILE [--output-format FORMAT]
 
 ## API Key Management
 
-For securely storing API keys across terminal sessions, Xerus supports loading environment variables from a `.env` file. This is especially useful for remote servers or when you need persistent configuration.
+Xerus provides secure and convenient API key management through the `init` command and environment variables.
 
-### Setting up environment variables with dotenv
+### Recommended Setup (using xerus init)
 
-1. Create a `.env` file in your project root:
+The easiest and most secure way to set up API keys is using the `init` command:
+
 ```bash
-# For Hugging Face models (default)
-HF_TOKEN=your_huggingface_token_here
-# For OPENAI models
-OPENAI_API_KEY=your_litellm_key_here
+xerus init
 ```
-> Note: List of supported providers in LiteLLM [here](https://docs.litellm.ai/docs/providers).
+
+This will:
+- Guide you through provider selection
+- Securely prompt for your API key (hidden input)
+- Create properly configured files with secure permissions
+- Set up environment variable references automatically
+
+### Manual Setup (advanced users)
+
+For manual configuration or when using custom providers, you can also manage API keys through environment variables and `.env` files.
+
+#### Creating a .env file manually
+
+1. Create a `.env` file in `~/.xerus/`:
+```bash
+# For Nebius
+NEBIUS_API_KEY=your_nebius_api_key_here
+
+# For Novita  
+NOVITA_API_KEY=your_novita_api_key_here
+
+# For other providers (if using custom configurations)
+HF_TOKEN=your_huggingface_token_here
+OPENAI_API_KEY=your_openai_key_here
+```
 
 2. Secure the file with proper permissions:
 ```bash
-chmod 600 .env
+chmod 600 ~/.xerus/.env
 ```
 
-3. Add to your `.gitignore` to prevent accidental commits:
-```bash
-echo ".env" >> .gitignore
-```
+3. The API keys will be automatically loaded when running Xerus commands.
 
-The appropriate environment variables will be automatically loaded from `~/.xerus/config.toml` when running Xerus commands.
+### Environment Variables
+
+Xerus supports loading environment variables from multiple sources:
+
+1. **System environment variables**
+2. **~/.xerus/.env file** (created by `xerus init` or manually)
+3. **Project-specific .env file** (if using dotenv in your project)
+
+### Security Best Practices
+
+- **Use `xerus init`**: The recommended approach that handles security automatically
+- **File Permissions**: Always ensure `.env` files have `600` permissions (owner read/write only)
+- **Version Control**: Never commit `.env` files to version control
+- **Environment Variables**: Prefer environment variables over hardcoded keys in configuration files
+
+### Supported Providers
+
+> Note: List of supported providers in LiteLLM [here](https://docs.litellm.ai/docs/providers).
+
+#### Nebius
+- Environment Variable: `NEBIUS_API_KEY`
+- Website: https://studio.nebius.ai/
+
+#### Novita
+- Environment Variable: `NOVITA_API_KEY`  
+- Website: https://novita.ai/
+
+#### GMI Cloud
+- Environment Variable: `GMI_CLOUD_API_KEY`  
+- Website: https://gmicloud.ai/
+
+#### Other Providers (manual configuration)
+- Hugging Face: `HF_TOKEN`
+- OpenAI: `OPENAI_API_KEY`
+- And many more supported by LiteLLM
 
 ### Sample .env file
 
-A sample `.env.example` file is included in the repository. You can copy it to create your own configuration:
+A sample `.env.example` file format:
 
 ```bash
-cp .env.example .env
-```
+# Xerus Environment Configuration
+# Choose your provider and add the corresponding API key
 
-Then edit the `.env` file to add your API keys.
+# Nebius
+NEBIUS_API_KEY=your_nebius_api_key_here
+
+# Novita
+NOVITA_API_KEY=your_novita_api_key_here
+
+# Optional: Additional environment variables, required by tools, or MCP servers
+GITHUB_TOKEN=your_github_token_here
+```
 
 ## Example Usages
 
@@ -581,26 +848,6 @@ Set up log rotation:
 xerus run --prompt "Configure logrotate for my application logs to retain 7 days of logs with daily rotation"
 ```
 
-### Using Custom Tools
-
-Create a custom greeting tool:
-
-```bash
-xerus run --prompt "Say hello to me in Spanish" --local-tools ./examples/hello_tool.py
-```
-
-Use an image generation tool from Hugging Face Space:
-
-```bash
-xerus run --prompt "Generate an image of a sunset over mountains" --space-tools stabilityai/stable-diffusion:image_generator:Creates images from text prompts
-```
-
-Combine multiple tools:
-
-```bash
-xerus run --prompt "Find news about climate change and generate an infographic" --built-in-tools --hub-tools username/infographic-tool
-```
-
 ### Session Management Examples
 
 Save a session:
@@ -632,8 +879,6 @@ xerus load physics_study_20230615_123045
 When in chat mode, you can use the following commands:
 
 - `exit` or `quit`: End the chat session
-- `history`: View conversation history
-- `clear`: Clear the conversation history
 - `save`: Save the current session
 
 ## Local Development

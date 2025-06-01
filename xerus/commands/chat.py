@@ -12,6 +12,7 @@ from ..sessions import (
 from ..tools import ManagerAgentFactory
 from ..ui.display import console
 from ..ui.progress import create_initialization_progress
+from ..utils import is_xerus_initialized, show_initialization_message
 
 @click.command(context_settings={"allow_extra_args": True, "allow_interspersed_args": False})
 @click.option("--session-name", help="Name for this session (used in saved session file)")
@@ -33,6 +34,11 @@ def chat(
     [green]xerus chat temperature=0.7 top_p=0.95[/green]\n
     [green]xerus chat --session-name "test" temperature=0.3 max_tokens=1000[/green]\n
     """
+    # Check if xerus is initialized
+    if not is_xerus_initialized():
+        show_initialization_message()
+        return
+        
     # Parse additional kwargs from extra arguments
     kwargs = {}
     for arg in ctx.args:
