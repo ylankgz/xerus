@@ -11,17 +11,17 @@ click.rich_click.STYLE_HELPTEXT = "cyan"
 click.rich_click.STYLE_OPTION = "bold green"
 click.rich_click.STYLE_COMMAND = "bold yellow"
 
-# Try to load environment variables from .env file if python-dotenv is installed
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    # Not raising an error since dotenv is optional
-    import warnings
-    warnings.warn(
-        "python-dotenv package not installed. Environment variables from .env files will not be loaded. "
-        "Install with: uv add python-dotenv or pip install python-dotenv"
-    )
+# # Try to load environment variables from .env file if python-dotenv is installed
+# try:
+#     from dotenv import load_dotenv
+#     load_dotenv()
+# except ImportError:
+#     # Not raising an error since dotenv is optional
+#     import warnings
+#     warnings.warn(
+#         "python-dotenv package not installed. Environment variables from .env files will not be loaded. "
+#         "Install with: uv add python-dotenv or pip install python-dotenv"
+#     )
 
 @click.group(invoke_without_command=True)
 @click.version_option(__version__, prog_name="Xerus")

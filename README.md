@@ -53,16 +53,17 @@ This will:
 Xerus currently supports these AI providers:
 
 #### Nebius
-- **Description**: Nebius AI Studio - High-performance cloud AI platform
-- **Website**: https://studio.nebius.ai/
+- **Website**: https://studio.nebius.com/
 - **API Key Environment Variable**: `NEBIUS_API_KEY`
-- **Models**: Meta-Llama-3.1 series (8B, 70B)
 
 #### Novita
-- **Description**: Novita AI - Affordable AI inference platform  
 - **Website**: https://novita.ai/
 - **API Key Environment Variable**: `NOVITA_API_KEY`
-- **Models**: Meta-Llama-3.1 series (8B, 70B)
+
+#### GMI CLoud
+- **Website**: https://gmicloud.ai/
+- **API Key Environment Variable**: `GMI_CLOUD_API_KEY`
+
 
 ### Quick Setup Examples
 

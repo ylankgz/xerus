@@ -2,6 +2,7 @@
     "_comment": "Xerus Tools Configuration - This file configures all built-in tools with their default settings. You can modify these values to customize tool behavior",
     
     "manager_agent": {
+      "code_agent": true,
       "name": "xerus_manager_agent",
       "description": "Expert in Python, Data Science, and Machine Learning",
       "model_id": "openai/deepseek-ai/DeepSeek-R1-0528",
@@ -57,6 +58,7 @@
     
     "tools": {
       "web_search_agent": {
+        "code_agent": false,
         "name": "web_search_agent",
         "description": "Searches the web for information",
         "tool_class": "smolagents.WebSearchTool",
@@ -70,6 +72,7 @@
       },
       
       "python_interpreter_agent": {
+        "code_agent": true,
         "name": "python_interpreter_agent",
         "description": "Executes Python code",
         "tool_class": "smolagents.PythonInterpreterTool",
@@ -92,6 +95,7 @@
       },
       
       "user_input_agent": {
+        "code_agent": true,
         "name": "user_input_agent",
         "description": "Accepts user input",
         "tool_class": "smolagents.UserInputTool",
@@ -102,6 +106,7 @@
       },
       
       "duckduckgo_search_agent": {
+        "code_agent": false,
         "name": "duckduckgo_search_agent",
         "description": "Searches the web for information using DuckDuckGo",
         "tool_class": "smolagents.DuckDuckGoSearchTool",
@@ -114,6 +119,7 @@
       },
       
       "visit_webpage_agent": {
+        "code_agent": true,
         "name": "visit_webpage_agent",
         "description": "Visits a webpage",
         "tool_class": "smolagents.VisitWebpageTool",
@@ -129,6 +135,7 @@
     "_example_custom_tool": {
       "_comment": "Example: Custom tool configuration. Uncomment and modify this section to add your own custom tools",
       "my_custom_tool": {
+        "code_agent": true,
         "name": "my_custom_tool",
         "description": "My custom tool description",
         "tool_class": "my_module.MyCustomTool",

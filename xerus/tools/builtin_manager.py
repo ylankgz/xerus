@@ -61,7 +61,8 @@ class BuiltInToolsManager:
                 "description": tool_config.get("description", ""),
                 "model_id": tool_config.get("model_id", ""),
                 "api_key": tool_config.get("api_key", ""),
-                "api_base": tool_config.get("api_base", "")
+                "api_base": tool_config.get("api_base", ""),
+                "code_agent": tool_config.get("code_agent", True)
             })
         
         return tools
@@ -86,7 +87,8 @@ class BuiltInToolsManager:
                     tool["api_base"],
                     [tool["tool"]],
                     name=tool["name"],
-                    description=tool["description"]
+                    description=tool["description"],
+                    code_agent=tool["code_agent"]
                 )
                 built_in_tools_agents_list.append(agent)
             except Exception as e:

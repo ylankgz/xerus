@@ -1,5 +1,5 @@
 from typing import List, Optional
-from smolagents import Tool, CodeAgent
+from smolagents import Tool, CodeAgent, ToolCallingAgent
 
 from ..model import ModelFactory
 from ..errors import AgentRuntimeError
@@ -16,6 +16,7 @@ class ToolAgentFactory:
         tools: List[Tool],
         name: Optional[str] = None,
         description: Optional[str] = None,
+        code_agent: Optional[bool] = True,
         **kwargs
     ) -> CodeAgent:
         """
@@ -28,6 +29,7 @@ class ToolAgentFactory:
             tools: List of Tool instances
             name: Optional agent name for uniqueness
             description: Optional description of the agent
+            code_agent: Optional flag to indicate if the agent is a code agent
             **kwargs: Additional arguments for model and agent creation
             
         Returns:
@@ -43,17 +45,28 @@ class ToolAgentFactory:
                 api_base=api_base,
                 **kwargs
             )
+
+            if code_agent:
+                agent = CodeAgent(
+                    tools=tools,
+                    model=tool_model,
+                    name=name,
+                    description=description,
+                    # stream_outputs=True,
+                    provide_run_summary=True,
+                    # use_structured_outputs_internally=True,
+                    **kwargs
+                )
             
-            agent = CodeAgent(
-                tools=tools,
-                model=tool_model,
-                name=name,
-                description=description,
-                stream_outputs=True,
-                provide_run_summary=True,
-                use_structured_outputs_internally=True,
-                **kwargs
-            )
+            else:
+                agent = ToolCallingAgent(
+                    tools=tools,
+                    model=tool_model,
+                    name=name,
+                    description=description,
+                    provide_run_summary=True,
+                    **kwargs
+                )
             return agent
             
         except Exception as e:

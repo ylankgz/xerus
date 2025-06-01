@@ -1,5 +1,5 @@
 from typing import List, Dict, Any
-from smolagents import CodeAgent, LogLevel
+from smolagents import CodeAgent, LogLevel, ToolCallingAgent
 
 from ..ui.display import console
 from ..config import load_config
@@ -64,19 +64,28 @@ class ManagerAgentFactory:
         
         # Create manager agent
         try:
-            manager_agent = CodeAgent(
-                tools=[],
-                model=client,
-                managed_agents=all_tool_agents,
-                additional_authorized_imports=manager_params.get("additional_authorized_imports", []),
-                max_steps=manager_params.get("max_steps", 10),
-                verbosity_level=verbosity_level,
-                name=manager_config.get("name"),
-                description=manager_config.get("description"),
-                stream_outputs=manager_params.get("stream_outputs", True),
-                use_structured_outputs_internally=manager_params.get("use_structured_outputs_internally", True)
-            )
-            
+            if manager_config.get("code_agent", True):
+                manager_agent = CodeAgent(
+                    tools=[],
+                    model=client,
+                    managed_agents=all_tool_agents,
+                    additional_authorized_imports=manager_params.get("additional_authorized_imports", []),
+                    max_steps=manager_params.get("max_steps", 10),
+                    verbosity_level=verbosity_level,
+                    name=manager_config.get("name"),
+                    description=manager_config.get("description"),
+                    stream_outputs=manager_params.get("stream_outputs", True),
+                    use_structured_outputs_internally=manager_params.get("use_structured_outputs_internally", True)
+                )
+            else:
+                manager_agent = ToolCallingAgent(
+                    tools=[],
+                    model=client,
+                    managed_agents=all_tool_agents,
+                    name=manager_config.get("name"),
+                    description=manager_config.get("description"),
+                )
+
             console.print(f"[green]Manager agent '{manager_config.get('name', 'unnamed')}' created successfully[/green]")
             return manager_agent
             
