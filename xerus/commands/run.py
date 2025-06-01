@@ -7,7 +7,7 @@ from ..agent import EnhancedAgent
 from ..error_handler import handle_command_errors
 from ..errors import InputError
 from ..sessions import create_session_file, save_session
-from ..tools import setup_manager_agent
+from ..tools import ManagerAgentFactory
 from ..ui.display import console
 from ..ui.progress import create_initialization_progress
 
@@ -70,8 +70,9 @@ def run(
         # Add a task for agent initialization
         agent_task = progress.add_task("[bold green]Initializing agent...", total=100)
 
-        # Setup manager agent from config with additional kwargs
-        manager_agent = setup_manager_agent(**kwargs)
+        # Setup manager agent from config with additional kwargs using new OOP interface
+        manager_factory = ManagerAgentFactory()
+        manager_agent = manager_factory.create_manager_agent(**kwargs)
 
         # Create the enhanced agent
         enhanced_agent = EnhancedAgent(manager_agent)
