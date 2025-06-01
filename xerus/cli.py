@@ -20,7 +20,7 @@ except ImportError:
     import warnings
     warnings.warn(
         "python-dotenv package not installed. Environment variables from .env files will not be loaded. "
-        "Install with: pip install python-dotenv"
+        "Install with: uv add python-dotenv or pip install python-dotenv"
     )
 
 @click.group(invoke_without_command=True)

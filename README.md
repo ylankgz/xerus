@@ -4,8 +4,30 @@ A command-line interface for running AI agents powered by Huggingface's Smolagen
 
 ## Installation
 
+### Using uv (Recommended)
+
+```bash
+uv add xerus-ai
+```
+
+### Using pip
+
 ```bash
 pip install xerus-ai
+```
+
+### From source
+
+```bash
+# Clone the repository
+git clone https://github.com/ylankgz/xerus.git
+cd xerus
+
+# Install with uv
+uv sync
+
+# Or install with pip
+pip install -e .
 ```
 
 ## Quick Start
@@ -616,6 +638,33 @@ When in chat mode, you can use the following commands:
 
 ## Local Development
 
+### Using uv (Recommended)
+
+To set up the development environment:
+
+```bash
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone and setup the project
+git clone https://github.com/ylankgz/xerus.git
+cd xerus
+
+# Install dependencies and the package in development mode
+uv sync --dev
+
+# Run tests
+uv run pytest
+
+# Run the CLI
+uv run xerus --help
+
+# Or
+xerus --help
+```
+
+### Using pip
+
 To test the package locally:
 
 ```bash
@@ -623,18 +672,131 @@ To test the package locally:
 pip install -e .
 ```
 
+## Publishing
+
+### Using uv (Recommended)
+
+Xerus uses modern Python packaging with `pyproject.toml` and uv for fast, reliable builds.
+
+#### Quick Build and Publish
+
+```bash
+# Build the package
+uv build
+
+# Publish to PyPI (requires PyPI credentials)
+uv publish
+```
+
+#### Comprehensive Build and Publish Workflow
+
+For a complete workflow with validation and testing:
+
+```bash
+
+# Or step by step:
+
+# 1. Clean previous builds
+rm -rf dist/ build/ *.egg-info/
+
+# 2. Install dependencies
+uv sync --dev
+
+# 3. Run tests
+uv run pytest
+
+# 4. Build package
+uv build
+
+# 5. Validate build (optional)
+uv run twine check dist/*
+
+# 6. Publish to Test PyPI first (optional)
+uv publish --repository testpypi
+
+# 7. Test install from Test PyPI
+pip install --index-url https://test.pypi.org/simple/ xerus-ai
+
+# 8. Publish to PyPI
+uv publish
+```
+
+#### PyPI Authentication
+
+Set up your PyPI credentials for publishing:
+
+```bash
+# Option 1: Use environment variables
+export UV_PUBLISH_USERNAME="__token__"
+export UV_PUBLISH_PASSWORD="pypi-your-token-here"
+
+# Option 2: Use uv auth
+uv auth add pypi --username __token__ --password pypi-your-token-here
+
+# Option 3: Use .pypirc file (traditional)
+cat > ~/.pypirc << EOF
+[distutils]
+index-servers = pypi testpypi
+
+[pypi]
+username = __token__
+password = pypi-your-token-here
+
+[testpypi]
+repository = https://test.pypi.org/legacy/
+username = __token__
+password = pypi-your-testpypi-token-here
+EOF
+```
+
+### Using Traditional Tools (pip/build/twine)
+
+If you prefer traditional Python packaging tools:
+
+```bash
+# Install build tools
+pip install build twine
+
+# Build package
+python -m build
+
+# Check build
+twine check dist/*
+
+# Upload to PyPI
+twine upload dist/*
+```
+
+### Release Workflow
+
+For creating releases:
+
+1. **Update version** in `pyproject.toml`
+2. **Update CHANGELOG** (if you have one)
+3. **Run tests**: `uv run pytest`
+4. **Build and publish**: `python scripts/build_and_publish.py`
+5. **Create git tag**: `git tag v0.0.7`
+6. **Push tag**: `git push origin v0.0.7`
+7. **Create GitHub release** (optional)
+
+### Verification
+
+After publishing, verify the package:
+
+```bash
+# Create a fresh environment
+uv venv test-env
+source test-env/bin/activate  # or test-env\Scripts\activate on Windows
+
+# Install from PyPI
+pip install xerus-ai
+
+# Test basic functionality
+xerus --help
+```
+
+Remember to update the version number in `pyproject.toml` before publishing new releases.
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Publishing
-
-To build and publish your package, you can run:
-
-```bash
-pip install build twine
-python -m build
-python -m twine upload dist/*
-```
-
-Remember to update the package information in setup.py with your actual details before publishing.

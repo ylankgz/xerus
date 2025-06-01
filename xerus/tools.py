@@ -8,13 +8,7 @@ from .ui.display import console
 from .model import ModelFactory
 from .errors import AgentRuntimeError
 from .config import load_config
-
-try:
-    from mcp import StdioServerParameters
-except ImportError:
-    console.print("[yellow]Warning: mcp package not found. MCP tools will not be available.[/yellow]")
-    console.print("[yellow]Install with: pip install mcp[/yellow]")
-    StdioServerParameters = None
+from mcp import StdioServerParameters
 
 def create_tool_agent(
     model_id,
@@ -78,7 +72,7 @@ def import_tool_class(tool_class_path: str):
         console.print(f"[red]Error importing tool class '{tool_class_path}': {e}[/red]")
         return None
 
-def create_mcp_server_parameters(mcp_config: dict) -> Optional['StdioServerParameters']:
+def create_mcp_server_parameters(mcp_config: dict) -> Optional[StdioServerParameters]:
     """Convert Claude Desktop MCP config format to StdioServerParameters."""
     if StdioServerParameters is None:
         console.print("[red]Error: mcp package not available for MCP server creation[/red]")

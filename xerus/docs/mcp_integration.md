@@ -15,6 +15,10 @@ MCP is a protocol that allows AI applications to securely connect to external se
 
 1. **Install the required packages:**
    ```bash
+   # Using uv (recommended)
+   uv add mcp python-dotenv
+   
+   # Or using pip
    pip install mcp python-dotenv
    ```
 
@@ -32,6 +36,10 @@ MCP is a protocol that allows AI applications to securely connect to external se
 
 3. **Install uvx if not already installed:**
    ```bash
+   # Using uv
+   uv tool install uvx
+   
+   # Or using pip
    pip install uvx
    ```
 
@@ -44,7 +52,7 @@ Xerus supports loading environment variables from a `.env` file and using variab
 1. **Create a `.env` file** at `~/.xerus/.env`:
    ```bash
    # API Configuration
-   GMI_CLOUD_API_KEY=your_gmi_cloud_api_key_here
+   GMI_CLOUD_API_KEY=your_gmi_cloud_api_key
    
    # Appwrite MCP Server
    APPWRITE_PROJECT_ID=your_appwrite_project_id
@@ -223,7 +231,7 @@ for tool in mcp_tools:
    ```
    Error: mcp package not found
    ```
-   **Solution**: Install the MCP package: `pip install mcp`
+   **Solution**: Install the MCP package: `uv add mcp` or `pip install mcp`
 
 2. **MCP Server Not Found**
    ```

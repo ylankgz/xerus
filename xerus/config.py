@@ -1,6 +1,5 @@
 import os
 import json
-import pkg_resources
 import re
 from pathlib import Path
 from typing import Dict, Any
@@ -27,12 +26,18 @@ def ensure_config_exists():
     # Copy template config if config.json doesn't exist
     if not os.path.exists(config_path):
         try:
-            # Try to get the template from package resources
-            template_content = pkg_resources.resource_string(__name__, 'config_template.json').decode('utf-8')
-            with open(config_path, 'w') as f:
-                f.write(template_content)
-            console.print(f"[green]Created default config file: {config_path}[/green]")
-            console.print("[yellow]You can customize tool settings by editing this file[/yellow]")
+            # Get the template from the package directory
+            template_path = Path(__file__).parent / 'config_template.json'
+            if template_path.exists():
+                with open(template_path, 'r') as f:
+                    template_content = f.read()
+                with open(config_path, 'w') as f:
+                    f.write(template_content)
+                console.print(f"[green]Created default config file: {config_path}[/green]")
+                console.print("[yellow]You can customize tool settings by editing this file[/yellow]")
+            else:
+                console.print(f"[red]Template config file not found at: {template_path}[/red]")
+                console.print("[yellow]Continuing with default hardcoded settings[/yellow]")
         except Exception as e:
             console.print(f"[red]Error creating config file: {e}[/red]")
             console.print("[yellow]Continuing with default hardcoded settings[/yellow]")
@@ -79,7 +84,7 @@ def load_config() -> Dict[str, Any]:
         console.print(f"[blue]Loaded environment variables from {env_file}[/blue]")
     elif env_file.exists() and not DOTENV_AVAILABLE:
         console.print(f"[yellow]Warning: .env file found at {env_file} but python-dotenv not installed[/yellow]")
-        console.print("[yellow]Install with: pip install python-dotenv[/yellow]")
+        console.print("[yellow]Install with: uv add python-dotenv or pip install python-dotenv[/yellow]")
     
     if not config_file.exists():
         console.print(f"[red]Configuration file not found: {config_file}[/red]")

@@ -8,7 +8,7 @@ This script shows how to:
 3. Use MCP tools with Xerus agents
 
 Prerequisites:
-- Install the mcp package: pip install mcp
+- Install the mcp package: uv add mcp or pip install mcp
 - Install desired MCP server packages (e.g., uvx mcp-server-appwrite)
 - Configure your MCP servers in ~/.xerus/config.json
 """
@@ -138,6 +138,8 @@ SQLITE_DB_PATH=/path/to/your/database.db
     console.print("- Individual model configuration per MCP server")
     
     console.print("\n[bold]Installation:[/bold]")
+    console.print("uv add mcp python-dotenv")
+    console.print("# Or with pip:")
     console.print("pip install mcp python-dotenv")
     console.print("uvx --help  # Install uvx if needed")
 
