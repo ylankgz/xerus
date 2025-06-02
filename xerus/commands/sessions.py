@@ -7,11 +7,17 @@ from rich.markdown import Markdown
 from ..sessions import get_session_dir, load_session
 from ..ui.display import console
 from ..error_handler import handle_command_errors
+from ..utils import is_xerus_initialized, show_initialization_message
 
 @click.command("sessions")
 @handle_command_errors
 def list_sessions_command():
     """List all saved sessions."""
+    # Check if xerus is initialized
+    if not is_xerus_initialized():
+        show_initialization_message()
+        return
+        
     session_dir = get_session_dir()
     sessions = list(session_dir.glob("*.json"))
     
@@ -56,6 +62,11 @@ def list_sessions_command():
 @handle_command_errors
 def load_session_command(session, format="rich"):
     """Load and display a saved session."""
+    # Check if xerus is initialized
+    if not is_xerus_initialized():
+        show_initialization_message()
+        return
+        
     # Check if session is None
     if session is None:
         console.print("[red]Error: No session file specified. Please provide a session file name or path.[/red]")

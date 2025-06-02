@@ -1,3 +1,50 @@
 [build-system]
 requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta" 
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xerus-ai"
+version = "0.0.7"
+description = "CLI agent for for running CodeAct agents, built with Huggingface Smolagents"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Ulan Abdurazakov", email = "ylankgz@gmail.com"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "smolagents[litellm,toolkit]>=1.15.0",
+    "rich-click>=1.8.8",
+    "python-dotenv>=1.1.0",
+    "mcp>=1.9.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/ylankgz/xerus"
+Repository = "https://github.com/ylankgz/xerus"
+
+[project.scripts]
+xerus = "xerus.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+xerus = ["config_template.toml"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=6.0",
+    "pytest-cov>=2.0",
+    "black>=21.0",
+    "flake8>=3.8",
+    "mypy>=0.910",
+
+]
+
+[tool.uv.sources] 

@@ -9,9 +9,10 @@ from ..sessions import (
     create_session_file,
     save_session
 )
-from ..tools import setup_manager_agent
+from ..tools import ManagerAgentFactory
 from ..ui.display import console
 from ..ui.progress import create_initialization_progress
+from ..utils import is_xerus_initialized, show_initialization_message
 
 @click.command(context_settings={"allow_extra_args": True, "allow_interspersed_args": False})
 @click.option("--session-name", help="Name for this session (used in saved session file)")
@@ -33,6 +34,11 @@ def chat(
     [green]xerus chat temperature=0.7 top_p=0.95[/green]\n
     [green]xerus chat --session-name "test" temperature=0.3 max_tokens=1000[/green]\n
     """
+    # Check if xerus is initialized
+    if not is_xerus_initialized():
+        show_initialization_message()
+        return
+        
     # Parse additional kwargs from extra arguments
     kwargs = {}
     for arg in ctx.args:
@@ -65,8 +71,9 @@ def chat(
         # Add a task for agent initialization
         agent_task = progress.add_task("[bold green]Initializing agent...", total=100)
 
-        # Setup manager agent from config with additional kwargs
-        manager_agent = setup_manager_agent(**kwargs)
+        # Setup manager agent from config with additional kwargs using new OOP interface
+        manager_factory = ManagerAgentFactory()
+        manager_agent = manager_factory.create_manager_agent(**kwargs)
 
         # Create the enhanced agent
         agent = EnhancedAgent(manager_agent)

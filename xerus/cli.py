@@ -11,17 +11,17 @@ click.rich_click.STYLE_HELPTEXT = "cyan"
 click.rich_click.STYLE_OPTION = "bold green"
 click.rich_click.STYLE_COMMAND = "bold yellow"
 
-# Try to load environment variables from .env file if python-dotenv is installed
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    # Not raising an error since dotenv is optional
-    import warnings
-    warnings.warn(
-        "python-dotenv package not installed. Environment variables from .env files will not be loaded. "
-        "Install with: pip install python-dotenv"
-    )
+# # Try to load environment variables from .env file if python-dotenv is installed
+# try:
+#     from dotenv import load_dotenv
+#     load_dotenv()
+# except ImportError:
+#     # Not raising an error since dotenv is optional
+#     import warnings
+#     warnings.warn(
+#         "python-dotenv package not installed. Environment variables from .env files will not be loaded. "
+#         "Install with: uv add python-dotenv or pip install python-dotenv"
+#     )
 
 @click.group(invoke_without_command=True)
 @click.version_option(__version__, prog_name="Xerus")
@@ -33,11 +33,13 @@ def main(ctx):
         print_project_info()
 
 # Import and register commands
+from .commands.init import init
 from .commands.run import run
 from .commands.chat import chat
 from .commands.sessions import list_sessions_command, load_session_command
 
 # Add commands to the CLI
+main.add_command(init, name="init")
 main.add_command(run, name="run")
 main.add_command(chat, name="chat")
 main.add_command(list_sessions_command, name="sessions")

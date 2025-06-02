@@ -1,0 +1,153 @@
+{
+  "_comment": "Xerus Tools Configuration for Novita - This file configures all built-in tools with Novita provider settings",
+  
+  "manager_agent": {
+    "name": "xerus_manager_agent",
+    "description": "Analyzes, trains, fine-tunes and runs ML models",
+    "model_id": "novita/deepseek/deepseek-r1-0528",
+    "api_key": "${NOVITA_API_KEY}",
+    "api_base": "https://api.novita.ai/v3/openai",
+    "parameters": {
+      "max_steps": 10,
+      "verbosity_level": 2,
+      "additional_authorized_imports": [],
+      "stream_outputs": true,
+      "use_structured_outputs_internally": false
+    },
+    "code_agent": true
+  },
+  
+  "mcpServers": {
+    "_comment": "MCP (Model Context Protocol) servers configuration. Supports both stdio-based and HTTP-based servers. Add your MCP servers here using Claude Desktop format for stdio servers, or use transport: 'streamable-http' for HTTP servers",
+    "_stdio_example": {
+      "description": "Example stdio-based MCP server (runs as subprocess)",
+      "_disabled": true,
+      "command": "uvx",
+      "args": ["mcp-server-example"],
+      "env": {
+        "API_KEY": "${API_KEY}"
+      },
+      "model_id": "novita/deepseek/deepseek-r1-0528-qwen3-8b",
+      "api_key": "${NOVITA_API_KEY}",
+      "api_base": "https://api.novita.ai/v3/openai"
+    },
+    "_http_example": {
+      "description": "Example HTTP-based MCP server (connects to running HTTP server)",
+      "_disabled": true,
+      "transport": "streamable-http",
+      "url": "http://127.0.0.1:8000/mcp",
+      "model_id": "novita/deepseek/deepseek-r1-0528-qwen3-8b",
+      "api_key": "${NOVITA_API_KEY}",
+      "api_base": "https://api.novita.ai/v3/openai"
+    },
+    "github": {
+      "description": "GitHub MCP server - integrates with GitHub API",
+      "_disabled": true,
+      "command": "uvx",
+      "args": [
+        "mcp-server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      },
+      "model_id": "novita/deepseek/deepseek-r1-0528-qwen3-8b",
+      "api_key": "${NOVITA_API_KEY}",
+      "api_base": "https://api.novita.ai/v3/openai"
+    }
+  },
+  
+  "tools": {
+    "web_search_agent": {
+      "code_agent": false,
+      "name": "web_search_agent",
+      "description": "Searches the web for information",
+      "tool_class": "smolagents.WebSearchTool",
+      "model_id": "novita/meta-llama/llama-4-scout-17b-16e-instruct",
+      "api_key": "${NOVITA_API_KEY}",
+      "api_base": "https://api.novita.ai/v3/openai",
+      "parameters": {
+        "max_results": 10,
+        "engine": "duckduckgo"
+      }
+    },
+    
+    "python_interpreter_agent": {
+      "code_agent": true,
+      "name": "python_interpreter_agent",
+      "description": "Executes Python code",
+      "tool_class": "smolagents.PythonInterpreterTool",
+      "model_id": "novita/deepseek/deepseek-r1-0528",
+      "api_key": "${NOVITA_API_KEY}",
+      "api_base": "https://api.novita.ai/v3/openai",
+      "parameters": {
+        "authorized_imports": ["math", "random", "datetime", "json", "re"]
+      }
+    },
+    
+    "final_answer_agent": {
+      "code_agent": true,
+      "name": "final_answer_agent",
+      "description": "Provides the final answer to the user",
+      "tool_class": "smolagents.FinalAnswerTool",
+      "model_id": "novita/meta-llama/llama-4-scout-17b-16e-instruct",
+      "api_key": "${NOVITA_API_KEY}",
+      "api_base": "https://api.novita.ai/v3/openai",
+      "parameters": {}
+    },
+    
+    "user_input_agent": {
+      "code_agent": true,
+      "name": "user_input_agent",
+      "description": "Accepts user input",
+      "tool_class": "smolagents.UserInputTool",
+      "model_id": "novita/meta-llama/llama-4-scout-17b-16e-instruct",
+      "api_key": "${NOVITA_API_KEY}",
+      "api_base": "https://api.novita.ai/v3/openai",
+      "parameters": {}
+    },
+    
+    "duckduckgo_search_agent": {
+      "code_agent": false,
+      "name": "duckduckgo_search_agent",
+      "description": "Searches the web for information using DuckDuckGo",
+      "tool_class": "smolagents.DuckDuckGoSearchTool",
+      "model_id": "novita/meta-llama/llama-4-scout-17b-16e-instruct",
+      "api_key": "${NOVITA_API_KEY}",
+      "api_base": "https://api.novita.ai/v3/openai",
+      "parameters": {
+        "max_results": 10
+      }
+    },
+    
+    "visit_webpage_agent": {
+      "code_agent": true,
+      "name": "visit_webpage_agent",
+      "description": "Visits a webpage",
+      "tool_class": "smolagents.VisitWebpageTool",
+      "model_id": "novita/meta-llama/llama-4-scout-17b-16e-instruct",
+      "api_key": "${NOVITA_API_KEY}",
+      "api_base": "https://api.novita.ai/v3/openai",
+      "parameters": {
+        "max_output_length": 40000
+      }
+    }
+  },
+  
+  "_example_custom_tool": {
+    "_comment": "Example: Custom tool configuration. Uncomment and modify this section to add your own custom tools",
+    "my_custom_tool": {
+      "name": "my_custom_tool",
+      "code_agent": true,
+      "description": "My custom tool description",
+      "tool_class": "my_module.MyCustomTool",
+      "model_id": "novita/deepseek/deepseek-r1-0528-qwen3-8b",
+      "api_key": "${NOVITA_API_KEY}",
+      "api_base": "https://api.novita.ai/v3/openai",
+      "parameters": {
+        "custom_param1": "value1",
+        "custom_param2": 42,
+        "custom_param3": ["item1", "item2", "item3"]
+      }
+    }
+  }
+} 
