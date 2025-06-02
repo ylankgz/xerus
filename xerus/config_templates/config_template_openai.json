@@ -1,12 +1,12 @@
 {
-    "_comment": "Xerus Tools Configuration for Nebius - This file configures all built-in tools with Nebius provider settings",
+    "_comment": "Xerus Tools Configuration for OpenAI - This file configures all built-in tools with OpenAI provider settings",
     
     "manager_agent": {
       "name": "xerus_manager_agent",
       "description": "AI manager, expert in Python, Data Science, and Machine Learning",
-      "model_id": "nebius/deepseek-ai/DeepSeek-R1-0528",
-      "api_key": "${NEBIUS_API_KEY}",
-      "api_base": "https://api.studio.nebius.com/v1",
+      "model_id": "openai/o4-mini",
+      "api_key": "${OPENAI_API_KEY}",
+      "api_base": "https://api.openai.com/v1",
       "parameters": {
         "max_steps": 10,
         "verbosity_level": 2,
@@ -27,18 +27,18 @@
         "env": {
           "API_KEY": "${API_KEY}"
         },
-        "model_id": "nebius/meta-llama/Meta-Llama-3.1-8B-Instruct-fast",
-        "api_key": "${NEBIUS_API_KEY}",
-        "api_base": "https://api.studio.nebius.com/v1"
+        "model_id": "openai/gpt-4.1-nano",
+        "api_key": "${OPENAI_API_KEY}",
+        "api_base": "https://api.openai.com/v1"
       },
       "_http_example": {
         "description": "Example HTTP-based MCP server (connects to running HTTP server)",
         "_disabled": true,
         "transport": "streamable-http",
         "url": "http://127.0.0.1:8000/mcp",
-        "model_id": "nebius/meta-llama/Meta-Llama-3.1-8B-Instruct-fast",
-        "api_key": "${NEBIUS_API_KEY}",
-        "api_base": "https://api.studio.nebius.com/v1"
+        "model_id": "openai/gpt-4.1-nano",
+        "api_key": "${OPENAI_API_KEY}",
+        "api_base": "https://api.openai.com/v1"
       },
       "github": {
         "description": "GitHub MCP server - integrates with GitHub API",
@@ -50,9 +50,9 @@
         "env": {
           "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
         },
-        "model_id": "nebius/meta-llama/Meta-Llama-3.1-8B-Instruct-fast",
-        "api_key": "${NEBIUS_API_KEY}",
-        "api_base": "https://api.studio.nebius.com/v1"
+        "model_id": "openai/gpt-4.1-nano",
+        "api_key": "${OPENAI_API_KEY}",
+        "api_base": "https://api.openai.com/v1"
       }
     },
     
@@ -62,9 +62,9 @@
         "name": "web_search_agent",
         "description": "Searches the web for information",
         "tool_class": "smolagents.WebSearchTool",
-        "model_id": "nebius/meta-llama/Meta-Llama-3.1-8B-Instruct-fast",
-        "api_key": "${NEBIUS_API_KEY}",
-        "api_base": "https://api.studio.nebius.com/v1",
+        "model_id": "openai/gpt-4.1-nano",
+        "api_key": "${OPENAI_API_KEY}",
+        "api_base": "https://api.openai.com/v1",
         "parameters": {
           "max_results": 10,
           "engine": "duckduckgo"
@@ -76,9 +76,9 @@
         "name": "python_interpreter_agent",
         "description": "Executes Python code",
         "tool_class": "smolagents.PythonInterpreterTool",
-        "model_id": "meta-llama/Meta-Llama-3.1-70B-Instruct",
-        "api_key": "${NEBIUS_API_KEY}",
-        "api_base": "https://api.studio.nebius.com/v1",
+        "model_id": "openai/o4-mini",
+        "api_key": "${OPENAI_API_KEY}",
+        "api_base": "https://api.openai.com/v1",
         "parameters": {
           "authorized_imports": ["math", "random", "datetime", "json", "re"]
         }
@@ -89,9 +89,9 @@
         "name": "final_answer_agent",
         "description": "Provides the final answer to the user",
         "tool_class": "smolagents.FinalAnswerTool",
-        "model_id": "nebius/meta-llama/Meta-Llama-3.1-8B-Instruct-fast",
-        "api_key": "${NEBIUS_API_KEY}",
-        "api_base": "https://api.studio.nebius.com/v1",
+        "model_id": "openai/gpt-4.1-nano",
+        "api_key": "${OPENAI_API_KEY}",
+        "api_base": "https://api.openai.com/v1",
         "parameters": {}
       },
       
@@ -100,9 +100,9 @@
         "name": "user_input_agent",
         "description": "Accepts user input",
         "tool_class": "smolagents.UserInputTool",
-        "model_id": "nebius/meta-llama/Meta-Llama-3.1-8B-Instruct-fast",
-        "api_key": "${NEBIUS_API_KEY}",
-        "api_base": "https://api.studio.nebius.com/v1",
+        "model_id": "openai/gpt-4.1-nano",
+        "api_key": "${OPENAI_API_KEY}",
+        "api_base": "https://api.openai.com/v1",
         "parameters": {}
       },
       
@@ -111,9 +111,9 @@
         "name": "duckduckgo_search_agent",
         "description": "Searches the web for information using DuckDuckGo",
         "tool_class": "smolagents.DuckDuckGoSearchTool",
-        "model_id": "nebius/meta-llama/Meta-Llama-3.1-8B-Instruct-fast",
-        "api_key": "${NEBIUS_API_KEY}",
-        "api_base": "https://api.studio.nebius.com/v1",
+        "model_id": "openai/gpt-4.1-nano",
+        "api_key": "${OPENAI_API_KEY}",
+        "api_base": "https://api.openai.com/v1",
         "parameters": {
           "max_results": 10
         }
@@ -124,9 +124,9 @@
         "name": "visit_webpage_agent",
         "description": "Visits a webpage",
         "tool_class": "smolagents.VisitWebpageTool",
-        "model_id": "nebius/meta-llama/Meta-Llama-3.1-8B-Instruct-fast",
-        "api_key": "${NEBIUS_API_KEY}",
-        "api_base": "https://api.studio.nebius.com/v1",
+        "model_id": "openai/gpt-4.1-nano",
+        "api_key": "${OPENAI_API_KEY}",
+        "api_base": "https://api.openai.com/v1",
         "parameters": {
           "max_output_length": 40000
         }
@@ -140,9 +140,9 @@
         "name": "my_custom_tool",
         "description": "My custom tool description",
         "tool_class": "my_module.MyCustomTool",
-        "model_id": "nebius/meta-llama/Meta-Llama-3.1-8B-Instruct-fast",
-        "api_key": "${NEBIUS_API_KEY}",
-        "api_base": "https://api.studio.nebius.com/v1",
+        "model_id": "openai/gpt-4.1-nano",
+        "api_key": "${OPENAI_API_KEY}",
+        "api_base": "https://api.openai.com/v1",
         "parameters": {
           "custom_param1": "value1",
           "custom_param2": 42,

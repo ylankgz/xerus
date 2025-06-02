@@ -9,6 +9,14 @@ from ..error_handler import handle_command_errors
 from ..ui.display import console
 
 PROVIDERS = {
+    "openai": {
+        "name": "OpenAI",
+        "description": "OpenAI - Advanced AI models",
+        "api_key_env": "OPENAI_API_KEY",
+        "config_template": "config_template_openai.json",
+        "api_base": "https://api.openai.com/v1",
+        "website": "https://platform.openai.com/"
+    },
     "nebius": {
         "name": "Nebius",
         "description": "Nebius AI Studio - High-performance cloud AI platform",
@@ -32,7 +40,7 @@ PROVIDERS = {
         "config_template": "config_template_gmi.json",
         "api_base": "https://api.gmi-serving.com/v1",
         "website": "https://www.gmicloud.ai/"
-    }
+    },
 }
 
 @click.command()

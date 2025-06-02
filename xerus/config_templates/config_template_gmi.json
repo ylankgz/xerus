@@ -11,7 +11,7 @@
       "parameters": {
         "max_steps": 10,
         "verbosity_level": 2,
-        "additional_authorized_imports": ["visit_webpage"],
+        "additional_authorized_imports": [],
         "stream_outputs": true,
         "use_structured_outputs_internally": true
       }

@@ -50,15 +50,6 @@ clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 
-# Build and publish with validation
-publish: clean dev test build
-	python scripts/build_and_publish.py
-
-# Publish to Test PyPI
-publish-test: clean dev test build
-	python scripts/build_and_publish.py --test-pypi
-
-
 # Development workflow - install, test, and format
 dev-setup: dev test format
 	@echo "✅ Development environment ready!"
