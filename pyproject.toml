@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xerus-ai"
-version = "0.0.6"
-description = "CLI agent for training and finetuning ML models, built with Huggingface Smolagents"
+version = "0.0.7"
+description = "CLI agent for for running CodeAct agents, built with Huggingface Smolagents"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
